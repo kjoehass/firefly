@@ -1,0 +1,13 @@
+*.[oa]
+*.swp
+*.bak
+questions
+papers
+datasheets
+gui
+code/Backups
+code/Old
+code/sketchbook
+code/Doxyfile
+code/latex
+spec/makediff

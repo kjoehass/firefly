@@ -1,0 +1,25 @@
+digraph pattern_state_diagram {
+	rankdir=TB;
+	size="2,2"
+	node [shape = ellipse, color=black, fontcolor=black];
+
+  node [label = "Delay 1" ] Delay1;
+  node [label = "Blink 1" ] Blink1;
+  node [label = "Delay 1 > 0?" ] PreD1;
+  node [label = "Delay 2 > 0?" ] PreD2;
+  node [label = "Delay 3 > 0?" ] PreD3;
+  node [label = "Delay 4 > 0?" ] PreD4;
+  node [label = " \N" ];
+
+	Begin  -> PreD1;
+  PreD1  -> Delay1  [ label = "Yes" ];
+
+  Delay1 -> Blink1;
+	PreD1  -> Blink1  [ label = "No" ];
+	Blink1 -> PreD2;  
+  PreD2  -> Delay2  [ label = "Yes" ];
+	PreD2  -> Blink2  [ label = "No" ];
+        
+	Blink4  -> End;
+        
+}
