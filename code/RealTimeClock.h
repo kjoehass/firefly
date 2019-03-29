@@ -5,7 +5,7 @@
  *
  * @author K. Joseph Hass
  * @date Created: 2019-03-07T13:57:19-0500
- * @date Last modified: 2019-03-07T16:17:04-0500
+ * @date Last modified: 2019-03-25T16:17:09-0400
  *
  * @copyright Copyright (C) 2019 Kenneth Joseph Hass
  *
@@ -24,6 +24,7 @@
 #define __REALTIMECLOCK_H
 
 #include "stdint.h"
+#include "Wire.h"
 
 /**
  * @class  RealTimeClock

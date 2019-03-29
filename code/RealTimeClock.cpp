@@ -5,7 +5,7 @@
  *
  * @author K. Joseph Hass
  * @date Created: 2019-03-07T15:47:07-0500
- * @date Last modified: 2019-03-17T17:03:26-0400
+ * @date Last modified: 2019-03-25T16:16:29-0400
  *
  * @copyright Copyright (C) 2019 Kenneth Joseph Hass
  *
@@ -22,16 +22,29 @@
  */
 
 #include "RealTimeClock.h"
+#include "Arduino.h"
 
 const uint8_t RTC_ADDRESS = 0x6F;
-const uint8_t RTCWKDAY    = 0x03;
+const uint8_t RTC_SECONDS = 0x00;
 
-const uint8_t OSCRUN      = (1 << 5);
-const uint8_t PWRFAIL     = (1 << 4);
-const uint8_t VBATEN      = (1 << 3);
+//
+// Control bits in RTC time registers
+//
+const uint8_t OSCRUN      = (1 << 5); //!< Oscillator running? in RTCWKDAY
+const uint8_t PWRFAIL     = (1 << 4); //!< Primary power lost? in RTCWKDAY
+const uint8_t VBATEN      = (1 << 3); //!< Enable battery backup in RTCWKDAY
+const uint8_t LEAPYR      = (1 << 5);
+const uint8_t STRTOSC     = (1 << 7); //!< Start oscillator, in RTCSEC
 
-//char RealTimeClock::timestring[30] = "2019-04-01T00:00:00Z";
-static char RealTimeClock::timestring[30];
+static char RealTimeClock::timestring[] = "2000-00-00T00:00:00Z";
+
+static char BCD2char(uint8_t BCDval) {
+  return ('0'+(BCDval & 0xF));
+}
+
+static uint8_t bin2BCD(uint8_t value) {
+  return (value + 6 * (value / 10));
+}
 
 /**
  * @fn    RealTimeClock::Set
@@ -52,8 +65,26 @@ void RealTimeClock::Set(uint16_t year,     //!< 4-digit year
                         uint8_t seconds)  //!< 0 to 59
 {
   Wire.beginTransmission(RTC_ADDRESS);
-  Wire.write(RTCWKDAY);
-  Wire.write(0x07);
+  Wire.write(RTC_SECONDS);      // first address is seconds register
+  Wire.write(bin2BCD(seconds)); // also stops the oscillator, STRTOSC = 0
+  Wire.write(bin2BCD(minutes));
+  Wire.write(bin2BCD(hour));    // also sets to 24-hr mode
+  Wire.write(VBATEN);           // enable battery in RTCWKDAY
+  Wire.write(bin2BCD(day));
+  //
+  // If year is divisible by 4, is a leap year
+  // Check if 2 LSBs are zero
+  //
+  if ((year & 0xFC) == year)
+    Wire.write(bin2BCD(month) | LEAPYR);
+  else
+    Wire.write(bin2BCD(month));
+  Wire.write(bin2BCD(year - 2000)); // 2-digit year
+  Wire.endTransmission();
+
+  Wire.beginTransmission(RTC_ADDRESS);
+  Wire.write(RTC_SECONDS);
+  Wire.write(bin2BCD(seconds) | STRTOSC); // start the clock
   Wire.endTransmission();
   return;
 }
@@ -64,20 +95,73 @@ void RealTimeClock::Set(uint16_t year,     //!< 4-digit year
  *
  * @return a date/time string
  */
-char* RealTimeClock::DateTime(void)
+char *RealTimeClock::DateTime(void)
 {
-  uint8_t StringPointer = 0;
-  //
-  // Year, 4 digits
-  //
-  RealTimeClock::timestring[StringPointer++] = '2';
-  
-  Wire.beginTransmission(RTC_ADDRESS);
-  Wire.write(RTCWKDAY);
-  Wire.endTransmission();
-  Wire.requestFrom(RTC_ADDRESS, 1);
-  {
-    Weekday = Wire.read();
-  }
-  return RealTimeClock::timestring;
+    uint8_t BCDvalue;
+    //
+    // Write the beginning address into the RTC address register
+    //
+    Wire.beginTransmission(RTC_ADDRESS);
+    Wire.write(RTC_SECONDS);
+    if (Wire.endTransmission() != 0) {
+        RealTimeClock::timestring[18] = '?';
+        RealTimeClock::timestring[17] = '?';
+        RealTimeClock::timestring[15] = '?';
+        RealTimeClock::timestring[14] = '?';
+    } else {
+        //
+        // Request 7 fields: sec, min, hr, wkday, date, mth, yr
+        //
+        Wire.requestFrom(RTC_ADDRESS, (uint8_t) 7);
+        //
+        // Seconds, 2 digits, bit 7 is ST (start oscillator)
+        // RealTimeClock::timestring[19] is 'Z'
+        // RealTimeClock::timestring[16] is ':'
+        //
+        BCDvalue = Wire.read();
+        RealTimeClock::timestring[18] = BCD2char(BCDvalue);
+        RealTimeClock::timestring[17] = BCD2char((BCDvalue & ~STRTOSC) >> 4);
+        //
+        // Minutes, 2 digits
+        // RealTimeClock::timestring[13] is ':'
+        //
+        BCDvalue = Wire.read();
+        RealTimeClock::timestring[15] = BCD2char(BCDvalue);
+        RealTimeClock::timestring[14] = BCD2char(BCDvalue >> 4);
+        //
+        // Hour, 2 digits, 24-hour format
+        // RealTimeClock::timestring[10] is 'T'
+        //
+        BCDvalue = Wire.read();
+        RealTimeClock::timestring[12] = BCD2char(BCDvalue);
+        RealTimeClock::timestring[11] = BCD2char(BCDvalue >> 4);
+        //
+        // Day-of-week, discarded
+        //
+        BCDvalue = Wire.read();
+        //
+        // Date, 2 digits
+        // RealTimeClock::timestring[7] is '-'
+        //
+        BCDvalue = Wire.read();
+        RealTimeClock::timestring[9] = BCD2char(BCDvalue);
+        RealTimeClock::timestring[8] = BCD2char(BCDvalue >> 4);
+        //
+        // Month, 2 digits, bit 5 is leap year
+        // RealTimeClock::timestring[4] is '-'
+        //
+        BCDvalue = Wire.read();
+        RealTimeClock::timestring[6] = BCD2char(BCDvalue);
+        RealTimeClock::timestring[5] = BCD2char((BCDvalue & ~LEAPYR) >> 4);
+        //
+        // Year, 4 digits, 8 bits represent bottom two digits
+        //
+        BCDvalue = Wire.read();
+        RealTimeClock::timestring[3] = BCD2char(BCDvalue);
+        RealTimeClock::timestring[2] = BCD2char(BCDvalue >> 4);
+        RealTimeClock::timestring[1] = '0';
+        RealTimeClock::timestring[0] = '2';
+    }
+
+    return RealTimeClock::timestring;
 }

@@ -5,7 +5,7 @@
  *
  * @author K. Joseph Hass
  * @date Created: 2019-03-07T16:21:42-0500
- * @date Last modified: 2019-03-17T16:08:58-0400
+ * @date Last modified: 2019-03-29T15:24:55-0400
  *
  * @copyright Copyright (C) 2019 Kenneth Joseph Hass
  *
@@ -39,7 +39,7 @@
  */
 const uint8_t LM75_ADDR = 0x4F;
 
-const int8_t MSB = 1 << 8;
+const int8_t MSB = 1 << 7;
 
 /**
  * @fn    TempSensor::Temperature
@@ -56,13 +56,14 @@ const int8_t MSB = 1 << 8;
 int8_t TempSensor::Temperature(void) {
     int8_t Temperature, HalfDegree;
 
-    Wire.requestFrom(LM75_ADDR, 2);
+    Wire.requestFrom(LM75_ADDR, (uint8_t)2);
     while (Wire.available())
     {
-      Temperature = Wire.read();
-      HalfDegree = Wire.read();
+      Temperature = (int8_t)Wire.read();
+      HalfDegree = (int8_t)Wire.read();
       if (HalfDegree & MSB) {
         Temperature++;
       }
     }
+    return Temperature;
 }
