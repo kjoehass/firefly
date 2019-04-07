@@ -1,6 +1,8 @@
 #include "Arduino.h"
 #include "ConfigData.h"
 #include "ConfigMsg.h"
+#include "RealTimeClock.h"
+#include "TempSensor.h"
 
 int toks[20];
 
@@ -81,7 +83,11 @@ void display_Patterns(){
  * a nicely formatted string.
  */
 void disp_pattern(){
-  String Msg = "p,Time,Temp,";
+  String Msg = "p,";
+  Msg += String(RealTimeClock::DateTime());
+  Msg += ",";
+  Msg += String(TempSensor::Temperature());
+  Msg += ",";
   Msg += String(pt.Number,DEC);
   Serial.println(Msg);  
 }

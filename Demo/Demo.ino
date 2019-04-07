@@ -1,6 +1,7 @@
 #include "ConfigData.h"
 #include "ConfigMsg.h"
 #include "ExeMsg.h"
+#include "RealTimeClock.h"
 
 const int BUFSIZE = 100;
 char data[BUFSIZE];
@@ -108,6 +109,7 @@ void setup() {
   Serial.println("Running ConfigMem::Init");
   ConfigMem::Init();
   randomSeed(analogRead(0));
+  RealTimeClock::Set(2019,4,8,16,33,02);
 }
 
 int i = 0;
