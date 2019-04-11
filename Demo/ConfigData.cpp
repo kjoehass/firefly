@@ -265,6 +265,8 @@ bool LED::isDefined(uint8_t lednum)
 void LED::DisplayLED(){
   String Msg = "";
   Msg += "Number: " + String(Number) + "   ";
+  // TODO store correct channel number, remove magic
+  // TODO convert channel to pin only when needed
   int num = 0;
   if(Channel == 3){num = 1;}
   else if(Channel == 5){num = 2;}
@@ -295,6 +297,7 @@ void LED::DisplayLED(){
 bool Flash::Save(void)
 {
     // Don't touch the EEPROM if values are invalid
+    // TODO Make sure Interval > sum of durations
     if ((Number == 0) || (Number > ConfigMem::MaxFlash) ||
         (LED > ConfigMem::MaxLED) ||
         (UpDuration > 32767) ||
@@ -416,6 +419,7 @@ void Flash::DisplayFlash(){
 bool Pattern::Save(void)
 {
     // Don't touch the EEPROM if values are invalid
+    // TODO verify that total InterpulseInterval < FlashPatternInterval
     if ((Number == 0) || (Number > ConfigMem::MaxPattern) ||
         (FlashPatternInterval == 0) || (FlashPatternInterval > 32767)) {
         return false;

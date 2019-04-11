@@ -20,8 +20,12 @@
  * Public License for more details.
  *
  */
+ // TODO add multiple inclusion guard to TempSensor.h
+#ifndef __TEMPSENSOR_H
+#define __TEMPSENSOR_H
 
 #include "stdint.h"
+#include <Wire.h>
 
 /**
  * @class TempSensor
@@ -32,3 +36,5 @@ class TempSensor {
   public:
     static int8_t Temperature(void);
 };
+
+#endif

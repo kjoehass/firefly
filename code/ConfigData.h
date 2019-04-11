@@ -75,6 +75,7 @@ class LED {
     bool Save(void);
     void Get(uint8_t lednum);
     static bool isDefined(uint8_t lednum);
+    void DisplayLED();
 };
 
 /**
@@ -99,6 +100,7 @@ class Flash {
     bool Save(void);
     void Get(uint8_t flashnum);
     static bool isDefined(uint8_t flashnum);
+    void DisplayFlash();
 };
 /**
  * @class   Pattern
@@ -122,5 +124,6 @@ class Pattern {
     bool Save(void);
     void Get(uint8_t pattnum);
     static bool isDefined(uint8_t pattnum);
+    void DisplayPattern();
 };
 #endif                          /* __CONFIGDATA_H */

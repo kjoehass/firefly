@@ -1,11 +1,11 @@
 /**
  * @file TempSensor.h
  *
- * @brief  
+ * @brief Support for an LM75 temperature sensor
  *
  * @author K. Joseph Hass
  * @date Created: 2019-03-07T16:22:40-0500
- * @date Last modified: 2019-03-07T16:27:11-0500
+ * @date Last modified: 2019-03-25T15:11:24-0400
  *
  * @copyright Copyright (C) 2019 Kenneth Joseph Hass
  *
@@ -20,15 +20,21 @@
  * Public License for more details.
  *
  */
+ // TODO add multiple inclusion guard to TempSensor.h
+#ifndef __TEMPSENSOR_H
+#define __TEMPSENSOR_H
 
 #include "stdint.h"
+#include <Wire.h>
 
 /**
  * @class TempSensor
- * @brief 
+ * @brief Provides a static function to return the temperature.
  *
  */
 class TempSensor {
   public:
     static int8_t Temperature(void);
 };
+
+#endif

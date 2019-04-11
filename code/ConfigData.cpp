@@ -34,6 +34,7 @@
  */
 #include <EEPROM.h>
 #include "ConfigData.h"
+#include "Arduino.h"
 
 #define CHKSUM_INIT 0xA5
 //
@@ -258,6 +259,27 @@ bool LED::isDefined(uint8_t lednum)
     return false;
 }
 
+/*
+ * Displays all the saved LED's saved to the serial terminal
+ */
+void LED::DisplayLED(){
+  String Msg = "";
+  Msg += "Number: " + String(Number) + "   ";
+  // TODO store correct channel number, remove magic
+  // TODO convert channel to pin only when needed
+  int num = 0;
+  if(Channel == 3){num = 1;}
+  else if(Channel == 5){num = 2;}
+  else if(Channel == 6){num = 3;}
+  else if(Channel == 9){num = 4;}
+  else if(Channel == 10){num = 5;}
+  else if(Channel == 11){num = 6;}
+  else {num = -1;}
+  Msg += "Channel: " + String(num) + "   ";
+  Msg += "MaxBrightness: " + String(MaxBrightness) + "   ";
+  Serial.println(Msg);
+}
+
 /**
  * @fn      Flash::Save
  * @brief   Saves a Flash object to EEPROM
@@ -275,6 +297,7 @@ bool LED::isDefined(uint8_t lednum)
 bool Flash::Save(void)
 {
     // Don't touch the EEPROM if values are invalid
+    // TODO Make sure Interval > sum of durations
     if ((Number == 0) || (Number > ConfigMem::MaxFlash) ||
         (LED > ConfigMem::MaxLED) ||
         (UpDuration > 32767) ||
@@ -369,6 +392,17 @@ bool Flash::isDefined(uint8_t flashnum)
     return false;
 }
 
+void Flash::DisplayFlash(){
+  String Msg = "";
+  Msg += "Number: " + String(Number) + "   ";
+  Msg += "LED: " + String(LED) + "   ";
+  Msg += "UpDur: " + String(UpDuration) + "   ";  
+  Msg += "DnDur: " + String(DownDuration) + "   ";
+  Msg += "OnDur: " + String(OnDuration) + "   ";
+  Msg += "Interval: " + String(InterpulseInterval);
+  Serial.println(Msg);
+}
+
 /**
  * @fn      Pattern::Save
  * @brief   Saves an Pattern object to EEPROM
@@ -385,6 +419,7 @@ bool Flash::isDefined(uint8_t flashnum)
 bool Pattern::Save(void)
 {
     // Don't touch the EEPROM if values are invalid
+    // TODO verify that total InterpulseInterval < FlashPatternInterval
     if ((Number == 0) || (Number > ConfigMem::MaxPattern) ||
         (FlashPatternInterval == 0) || (FlashPatternInterval > 32767)) {
         return false;
@@ -455,8 +490,7 @@ void Pattern::Get(uint8_t pattnum)
  * @return  boolean true or false
  *
  */
-bool Pattern::isDefined(uint8_t pattnum)
-{
+bool Pattern::isDefined(uint8_t pattnum){
     if ((pattnum > 0) && (pattnum <= ConfigMem::MaxPattern)) {
         uint16_t MyAddress = ConfigMem::PatternBase + ((pattnum - 1)
                                                        * PatternSize);
@@ -475,4 +509,22 @@ bool Pattern::isDefined(uint8_t pattnum)
     }
     // Invalid pattnum
     return false;
+}
+
+void Pattern::DisplayPattern(){
+    String Msg = "";
+    Msg += "Number: " + String(Number) + "   ";
+    Msg += "FlashPatternInterval: " + String(FlashPatternInterval) + "   ";
+    Msg += "FlashList: " + String(FlashList[0]);
+    int i;
+    for(i = 1;i<17;i++){
+      if(FlashList[i] == 0){
+        break;
+      }else if(i == 16){
+        Msg += String(FlashList[i]);
+      }else{
+      Msg += "," + String(FlashList[i]);
+      }
+    }
+    Serial.println(Msg);
 }
