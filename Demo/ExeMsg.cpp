@@ -176,6 +176,7 @@ void exec_pattern(char* dat){
     ld.Get(fl.LED);
     index = (index + 1) % FListLen;
     flash_led();
+    delay(pt.FlashPatternInterval);
   }
 }
 
