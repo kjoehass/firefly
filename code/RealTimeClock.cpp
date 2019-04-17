@@ -5,7 +5,7 @@
  *
  * @author K. Joseph Hass
  * @date Created: 2019-03-07T15:47:07-0500
- * @date Last modified: 2019-04-17T12:14:29-0400
+ * @date Last modified: 2019-04-17T14:08:16-0400
  *
  * @copyright Copyright (C) 2019 Kenneth Joseph Hass
  *
@@ -77,7 +77,7 @@ char RealTimeClock::timestring[21];     //!< static string storing date/time
  * @param month   current month, 1 to 12
  * @param day     current day, 1 to 31
  * @param hour    current hour, 0 to 23
- * @param minute  current minute, 0 to 59
+ * @param minutes current minute, 0 to 59
  * @param seconds current seconds, 0 to 59
  */
 void RealTimeClock::Set(uint16_t year,  //!< 4-digit year 
