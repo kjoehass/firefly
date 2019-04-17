@@ -5,7 +5,7 @@
  *
  * @author K. Joseph Hass
  * @date Created: 2019-03-07T16:21:42-0500
- * @date Last modified: 2019-03-29T15:24:55-0400
+ * @date Last modified: 2019-04-17T12:17:25-0400
  *
  * @copyright Copyright (C) 2019 Kenneth Joseph Hass
  *
@@ -37,7 +37,7 @@
  *        to the supply voltage or to ground. Therefore, there are 8 possible
  *        7-bit addresses for an LM75 from 0x48 to 0x4F.
  */
-const uint8_t LM75_ADDR = 0x4F;
+const uint8_t LM75_ADDR = 0x4F;  
 
 const int8_t MSB = 1 << 7;
 
@@ -53,17 +53,17 @@ const int8_t MSB = 1 << 7;
  *
  * @return integer degrees Celsius
  */
-int8_t TempSensor::Temperature(void) {
+int8_t TempSensor::Temperature(void)
+{
     int8_t Temperature, HalfDegree;
 
-    Wire.requestFrom(LM75_ADDR, (uint8_t)2);
-    while (Wire.available())
-    {
-      Temperature = (int8_t)Wire.read();
-      HalfDegree = (int8_t)Wire.read();
-      if (HalfDegree & MSB) {
-        Temperature++;
-      }
+    Wire.requestFrom(LM75_ADDR, (uint8_t) 2);
+    while (Wire.available()) {
+        Temperature = (int8_t) Wire.read();
+        HalfDegree = (int8_t) Wire.read();
+        if (HalfDegree & MSB) {
+            Temperature++;
+        }
     }
     return Temperature;
 }
