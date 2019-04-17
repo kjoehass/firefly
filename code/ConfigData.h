@@ -16,7 +16,7 @@
  *
  * @author K. Joseph Hass
  * @date Created: 2019-02-10T13:26:37-0500
- * @date Last modified: 2019-03-05T11:16:05-0500
+ * @date Last modified: 2019-04-14T10:59:56-0400
  *
  * @copyright Copyright (C) 2019 Kenneth Joseph Hass
  *
@@ -75,7 +75,7 @@ class LED {
     bool Save(void);
     void Get(uint8_t lednum);
     static bool isDefined(uint8_t lednum);
-    void DisplayLED();
+    void Display();
 };
 
 /**
@@ -99,8 +99,9 @@ class Flash {
 
     bool Save(void);
     void Get(uint8_t flashnum);
+    static uint16_t GetInterpulseInterval(uint8_t flashnum);
     static bool isDefined(uint8_t flashnum);
-    void DisplayFlash();
+    void Display();
 };
 /**
  * @class   Pattern
@@ -124,6 +125,6 @@ class Pattern {
     bool Save(void);
     void Get(uint8_t pattnum);
     static bool isDefined(uint8_t pattnum);
-    void DisplayPattern();
+    void Display();
 };
 #endif                          /* __CONFIGDATA_H */

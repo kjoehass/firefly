@@ -17,7 +17,7 @@
  *
  * @author K. Joseph Hass
  * @date Created: 2019-02-20T08:28:10-0500
- * @date Last modified: 2019-03-05T11:13:16-0500
+ * @date Last modified: 2019-04-17T13:36:42-0400
  *
  * @copyright Copyright (C) 2019 Kenneth Joseph Hass
  *
@@ -33,10 +33,17 @@
  *
  */
 #include <EEPROM.h>
+#include "Firefly.h"
 #include "ConfigData.h"
 #include "Arduino.h"
 
+//
+// The initial value of the checksum is chosen so that the sum of erased
+// EEPROM cells can not yield a checksum that is also the value of an
+// erased cell. Assume that an erased cell could be 0x00 or 0xFF
+//
 #define CHKSUM_INIT 0xA5
+
 //
 // The number of bytes reserved in EEPROM for each configuration data
 // structure. The EEPROM in the ATmega chips has a page size of 4 bytes
@@ -51,7 +58,12 @@ namespace {
 //
 // Define and initialize static member data of the ConfigMem
 //
-uint8_t  ConfigMem::MaxChannel  = 0;
+#if ARDUINO_IS_UNO == 1
+  uint8_t  ConfigMem::MaxChannel  = 6;
+#else
+  #error "Arduino model is undefined"
+  uint8_t  ConfigMem::MaxChannel  = 0;
+#endif
 uint8_t  ConfigMem::MaxEvent    = 0;
 uint8_t  ConfigMem::MaxFlash    = 0;
 uint8_t  ConfigMem::MaxLED      = 0;
@@ -69,10 +81,11 @@ uint16_t ConfigMem::EventBase   = 0;
  * @param byte value to be stored
  * @param checksum_p pointer to the checksum
  */
-static void WriteByte(uint16_t *address_p, uint8_t byte, uint8_t *checksum_p) {
-  EEPROM.update(*address_p, byte);
-  (*checksum_p) += byte;
-  (*address_p)++;
+static void WriteByte(uint16_t * address_p, uint8_t byte, uint8_t * checksum_p)
+{
+    EEPROM.update(*address_p, byte);
+    (*checksum_p) += byte;
+    (*address_p)++;
 }
 /**
  * @fn    Write2Byte
@@ -84,16 +97,18 @@ static void WriteByte(uint16_t *address_p, uint8_t byte, uint8_t *checksum_p) {
  * @param word 16-bit value to be stored
  * @param checksum_p pointer to the checksum
  */
-static void Write2Byte(uint16_t *address_p, uint16_t word, uint8_t *checksum_p) {
-  uint8_t byte = (uint8_t)(word & 0xFF);
-  EEPROM.update(*address_p, byte);
-  (*checksum_p) += byte;
-  (*address_p)++;
+static void Write2Byte(uint16_t * address_p, uint16_t word,
+                       uint8_t * checksum_p)
+{
+    uint8_t byte = (uint8_t) (word & 0xFF);
+    EEPROM.update(*address_p, byte);
+    (*checksum_p) += byte;
+    (*address_p)++;
 
-  byte = (uint8_t)((word >> 8) & 0xFF);
-  EEPROM.update(*address_p, byte);
-  (*checksum_p) += byte;
-  (*address_p)++;
+    byte = (uint8_t) ((word >> 8) & 0xFF);
+    EEPROM.update(*address_p, byte);
+    (*checksum_p) += byte;
+    (*address_p)++;
 }
 /**
  * @fn    ReadByte
@@ -103,12 +118,13 @@ static void Write2Byte(uint16_t *address_p, uint16_t word, uint8_t *checksum_p) 
  * @param checksum_p pointer to the checksum
  * @return byte read from EEPROM
  */
-static uint8_t ReadByte(uint16_t *address_p, uint8_t *checksum_p) {
-  uint8_t byte;
-  byte = EEPROM.read(*address_p);
-  (*checksum_p) += byte;
-  (*address_p)++;
-  return byte;
+static uint8_t ReadByte(uint16_t * address_p, uint8_t * checksum_p)
+{
+    uint8_t byte;
+    byte = EEPROM.read(*address_p);
+    (*checksum_p) += byte;
+    (*address_p)++;
+    return byte;
 }
 /**
  * @fn    Read2Byte
@@ -121,17 +137,18 @@ static uint8_t ReadByte(uint16_t *address_p, uint8_t *checksum_p) {
  * @param checksum_p pointer to the checksum
  * @return word read from EEPROM
  */
-static uint16_t Read2Byte(uint16_t *address_p, uint8_t *checksum_p) {
-  uint8_t byte = EEPROM.read(*address_p);
-  (*checksum_p) += byte;
-  (*address_p)++;
-  uint16_t word = byte;
+static uint16_t Read2Byte(uint16_t * address_p, uint8_t * checksum_p)
+{
+    uint8_t byte = EEPROM.read(*address_p);
+    (*checksum_p) += byte;
+    (*address_p)++;
+    uint16_t word = byte;
 
-  byte = EEPROM.read(*address_p);
-  (*checksum_p) += byte;
-  (*address_p)++;
-  word += (byte << 8);
-  return word;
+    byte = EEPROM.read(*address_p);
+    (*checksum_p) += byte;
+    (*address_p)++;
+    word += (byte << 8);
+    return word;
 }
 
 /**
@@ -145,26 +162,24 @@ static uint16_t Read2Byte(uint16_t *address_p, uint8_t *checksum_p) {
  *          on these limits, the starting address is calculated for the regions
  *          of EEPROM that store the different kinds of objects.
  *
- * @todo    Set MaxChannel based on type of Arduino used
- * @todo    Do proper checks for different Arduino models
  */
-void ConfigMem::Init(void) {
-    MaxChannel = 6;
+void ConfigMem::Init(void)
+{
     if (EEPROM.length() == 1024) {
-      MaxPattern = 16;
-      MaxFlash = 16;
-      MaxLED = 16;
-      MaxEvent = 16;
+        MaxPattern = 16;
+        MaxFlash = 16;
+        MaxLED = 16;
+        MaxEvent = 16;
     } else {
-      MaxPattern = 8;
-      MaxFlash = 8;
-      MaxLED = 8;
-      MaxEvent = 8;
+        MaxPattern = 8;
+        MaxFlash = 8;
+        MaxLED = 8;
+        MaxEvent = 8;
     }
     PatternBase = 0x000;
-    FlashBase   = PatternBase + (MaxPattern * PatternSize);
-    LEDBase     = FlashBase + (MaxFlash * FlashSize);
-    EventBase   = LEDBase + (MaxLED * LEDSize);
+    FlashBase = PatternBase + (MaxPattern * PatternSize);
+    LEDBase = FlashBase + (MaxFlash * FlashSize);
+    EventBase = LEDBase + (MaxLED * LEDSize);
 }
 
 /**
@@ -248,36 +263,35 @@ bool LED::isDefined(uint8_t lednum)
     if ((lednum > 0) && (lednum <= ConfigMem::MaxLED)) {
         uint16_t MyAddress = ConfigMem::LEDBase + ((lednum - 1) * LEDSize);
         uint8_t Checksum = CHKSUM_INIT;
-        ReadByte(&MyAddress, &Checksum); // Channel
-        ReadByte(&MyAddress, &Checksum); // MaxBrightness
+        ReadByte(&MyAddress, &Checksum);        // Channel
+        ReadByte(&MyAddress, &Checksum);        // MaxBrightness
         // Finally, get the stored checksum
         Checksum ^= EEPROM.read(MyAddress);
         if (Checksum == 0) {
-          return true;
+            return true;
         }
     }
     return false;
 }
 
-/*
- * Displays all the saved LED's saved to the serial terminal
+/**
+ * @fn      LED::Display
+ * @brief   Displays a single LED to the serial terminal
+ * 
  */
-void LED::DisplayLED(){
-  String Msg = "";
-  Msg += "Number: " + String(Number) + "   ";
-  // TODO store correct channel number, remove magic
-  // TODO convert channel to pin only when needed
-  int num = 0;
-  if(Channel == 3){num = 1;}
-  else if(Channel == 5){num = 2;}
-  else if(Channel == 6){num = 3;}
-  else if(Channel == 9){num = 4;}
-  else if(Channel == 10){num = 5;}
-  else if(Channel == 11){num = 6;}
-  else {num = -1;}
-  Msg += "Channel: " + String(num) + "   ";
-  Msg += "MaxBrightness: " + String(MaxBrightness) + "   ";
-  Serial.println(Msg);
+void LED::Display()
+{
+    String Msg = "";
+#if HUMAN_READABLE_MSG == 1
+    Msg += "Number: " + String(Number) + "   ";
+    Msg += "Channel: " + String(Channel) + "   ";
+    Msg += "MaxBrightness: " + String(MaxBrightness);
+#else
+    Msg += "l," + String(Number);
+    Msg += "," + String(Channel);
+    Msg += "," + String(MaxBrightness);
+#endif
+    Serial.println(Msg);
 }
 
 /**
@@ -290,6 +304,7 @@ void LED::DisplayLED(){
  *              - LED is  > ConfigMem::MaxLED
  *              - Any duration is > 32767
  *              - InterpulseInterval is 0 or > 32767
+ *              - InterpulseInterval is < sum of up, on ,down durations
  *          
  * @return boolean true or false
  * 
@@ -297,13 +312,13 @@ void LED::DisplayLED(){
 bool Flash::Save(void)
 {
     // Don't touch the EEPROM if values are invalid
-    // TODO Make sure Interval > sum of durations
     if ((Number == 0) || (Number > ConfigMem::MaxFlash) ||
         (LED > ConfigMem::MaxLED) ||
         (UpDuration > 32767) ||
         (OnDuration > 32767) ||
         (DownDuration > 32767) ||
-        (InterpulseInterval == 0) || (InterpulseInterval > 32767)) {
+        (InterpulseInterval == 0) || (InterpulseInterval > 32767) ||
+        (InterpulseInterval < (UpDuration + OnDuration + DownDuration))) {
         return false;
     } else {
         uint16_t MyAddress = ConfigMem::FlashBase + ((Number - 1) * FlashSize);
@@ -334,16 +349,17 @@ void Flash::Get(uint8_t flashnum)
 {
     uint8_t Checksum = CHKSUM_INIT;
     if ((flashnum > 0) && (flashnum <= ConfigMem::MaxFlash)) {
-      uint16_t MyAddress = ConfigMem::FlashBase + ((flashnum - 1) * FlashSize);
-      Number = flashnum;
-      // Get rest of config data, updating checksum along the way
-      LED = ReadByte(&MyAddress, &Checksum);
-      UpDuration = Read2Byte(&MyAddress, &Checksum);
-      OnDuration = Read2Byte(&MyAddress, &Checksum);
-      DownDuration = Read2Byte(&MyAddress, &Checksum);
-      InterpulseInterval = Read2Byte(&MyAddress, &Checksum);
-      // Finally, get the stored checksum
-      Checksum ^= EEPROM.read(MyAddress);
+        uint16_t MyAddress =
+            ConfigMem::FlashBase + ((flashnum - 1) * FlashSize);
+        Number = flashnum;
+        // Get rest of config data, updating checksum along the way
+        LED = ReadByte(&MyAddress, &Checksum);
+        UpDuration = Read2Byte(&MyAddress, &Checksum);
+        OnDuration = Read2Byte(&MyAddress, &Checksum);
+        DownDuration = Read2Byte(&MyAddress, &Checksum);
+        InterpulseInterval = Read2Byte(&MyAddress, &Checksum);
+        // Finally, get the stored checksum
+        Checksum ^= EEPROM.read(MyAddress);
     }
     //
     // Make sure that flashnum is in the correct range, and checksum is zero
@@ -358,6 +374,7 @@ void Flash::Get(uint8_t flashnum)
         InterpulseInterval = 0;
     }
 }
+
 /**
  * @fn      Flash::isDefined
  * @brief   Checks to see if a given Flash number has been configured
@@ -377,9 +394,9 @@ bool Flash::isDefined(uint8_t flashnum)
             ConfigMem::FlashBase + ((flashnum - 1) * FlashSize);
         uint8_t Checksum = CHKSUM_INIT;
         // Read config data, updating checksum along the way
-        ReadByte(&MyAddress, &Checksum);      // LED number
+        ReadByte(&MyAddress, &Checksum);        // LED number
         for (int i = 0; i < 4; i++) {
-            Read2Byte(&MyAddress, &Checksum); // timing values
+            Read2Byte(&MyAddress, &Checksum);   // timing values
         }
         // Finally, get the stored checksum
         Checksum ^= EEPROM.read(MyAddress);
@@ -392,15 +409,46 @@ bool Flash::isDefined(uint8_t flashnum)
     return false;
 }
 
-void Flash::DisplayFlash(){
-  String Msg = "";
-  Msg += "Number: " + String(Number) + "   ";
-  Msg += "LED: " + String(LED) + "   ";
-  Msg += "UpDur: " + String(UpDuration) + "   ";  
-  Msg += "DnDur: " + String(DownDuration) + "   ";
-  Msg += "OnDur: " + String(OnDuration) + "   ";
-  Msg += "Interval: " + String(InterpulseInterval);
-  Serial.println(Msg);
+/**
+ * @fn      Flash::Display
+ * @brief   Displays a single Flash to the serial terminal
+ * 
+ */
+void Flash::Display()
+{
+    String Msg = "";
+#if HUMAN_READABLE_MSG == 1
+    Msg += "Number: " + String(Number) + "   ";
+    Msg += "LED: " + String(LED) + "   ";
+    Msg += "UpDur: " + String(UpDuration) + "   ";
+    Msg += "OnDur: " + String(OnDuration) + "   ";
+    Msg += "DnDur: " + String(DownDuration) + "   ";
+    Msg += "Interval: " + String(InterpulseInterval);
+#else
+    Msg += "f," + String(Number);
+    Msg += "," + String(LED);
+    Msg += "," + String(UpDuration);
+    Msg += "," + String(OnDuration);
+    Msg += "," + String(DownDuration);
+    Msg += "," + String(InterpulseInterval);
+#endif
+    Serial.println(Msg);
+}
+
+/**
+ * @fn      Flash::GetInterpulseInterval
+ * @brief   Gets the InterpulseInterval of a Flash from EEPROM
+ *
+ * @param   flashnum the Flash number to fetch
+ * @return  the InterpulseInterval
+ *
+ */
+uint16_t Flash::GetInterpulseInterval(uint8_t flashnum)
+{
+    uint8_t Checksum = CHKSUM_INIT;
+    uint16_t MyAddress = ConfigMem::FlashBase + ((flashnum - 1) * FlashSize);
+    MyAddress += 7;             // Offset to Interpulse Interval
+    return (Read2Byte(&MyAddress, &Checksum));
 }
 
 /**
@@ -411,24 +459,36 @@ void Flash::DisplayFlash(){
  *          Returns false, and does not change EEPROM, if any of these is true:
  *              - Number is 0 or > ConfigMem::MaxPattern
  *              - FlashPatternInterval is 0 or > 32767
- *              - Any FlashList element is > ConfigMem::MaxFlash
+ *              - Any FlashList element is not defined
+ *              - The sum of the InterFlashIntervals is > FlashPatternInterval
  *          
  * @return boolean true or false
  *
  */
 bool Pattern::Save(void)
 {
-    // Don't touch the EEPROM if values are invalid
-    // TODO verify that total InterpulseInterval < FlashPatternInterval
-    if ((Number == 0) || (Number > ConfigMem::MaxPattern) ||
-        (FlashPatternInterval == 0) || (FlashPatternInterval > 32767)) {
-        return false;
-    } else {
-        for (int i = 0; i < 16; i++) {
-            if (FlashList[i] > ConfigMem::MaxFlash) {
-              return false;
+    //
+    // Calculate total time used by flashes, look for non-zero flash numbers
+    // that have not been defined. A flash number of zero is just ignored.
+    //
+    uint32_t TotalFlashTime = 0;
+    int UndefinedFlash = 0;
+    for (int i = 0; i < 16; i++) {
+        if (Flash::isDefined(FlashList[i])) {
+            TotalFlashTime += Flash::GetInterpulseInterval(FlashList[i]);
+        } else {
+            if (FlashList[i] != 0) {
+                UndefinedFlash++;
             }
         }
+    }
+    
+    // Don't touch the EEPROM if values are invalid
+    if ((Number == 0) || (Number > ConfigMem::MaxPattern) ||
+        (FlashPatternInterval == 0) || (FlashPatternInterval > 32767) ||
+        (FlashPatternInterval < TotalFlashTime) || (UndefinedFlash > 0)) {
+        return false;
+    } else {
         uint16_t MyAddress = ConfigMem::PatternBase + ((Number - 1)
                                                        * PatternSize);
         uint8_t Checksum = CHKSUM_INIT;
@@ -511,20 +571,31 @@ bool Pattern::isDefined(uint8_t pattnum){
     return false;
 }
 
-void Pattern::DisplayPattern(){
+/**
+ * @fn      Pattern::Display
+ * @brief   Displays a single Pattern to the serial terminal
+ * 
+ */
+void Pattern::Display(void)
+{
     String Msg = "";
+#if HUMAN_READABLE_MSG == 1
     Msg += "Number: " + String(Number) + "   ";
     Msg += "FlashPatternInterval: " + String(FlashPatternInterval) + "   ";
-    Msg += "FlashList: " + String(FlashList[0]);
+    Msg += "FlashList:";
     int i;
-    for(i = 1;i<17;i++){
-      if(FlashList[i] == 0){
-        break;
-      }else if(i == 16){
-        Msg += String(FlashList[i]);
-      }else{
-      Msg += "," + String(FlashList[i]);
-      }
+    while (FlashList[i] > 0) {
+        Msg += " " + String(FlashList[i]);
+        i++;
     }
+#else
+    Msg += "p," + String(Number);
+    Msg += "," + String(FlashPatternInterval);
+    int i;
+    while (FlashList[i] > 0) {
+        Msg += "," + String(FlashList[i]);
+        i++;
+    }
+#endif
     Serial.println(Msg);
 }
