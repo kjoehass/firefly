@@ -19,16 +19,16 @@ void exec_led(char *dat) {
   Serial.println(LED_num);
   //Load led code into static led
   bool ret;
-  if (ld.isDefined(LED_num)) {
+  if (ld.isDefined(LED_num) && (getChannel(ld.Channel) != -1)) {
     ld.Get(LED_num);
     //Configure the output pin on the board
     int illum_lvl = toks[2];
     // TODO map virtual channel to physical pin correctly
-    pinMode(ld.Channel, OUTPUT);
+    pinMode(getChannel(ld.Channel), OUTPUT);
 
     //Set the illum level of the output pin
     illum_lvl = (int)(ld.MaxBrightness * ((float)(illum_lvl / 100.0)));
-    analogWrite(ld.Channel, illum_lvl);
+    analogWrite(getChannel(ld.Channel), illum_lvl);
   } else {
     Serial.println("Invalid LED Number");
     return;
@@ -58,7 +58,7 @@ void flash_led(int interval = 40) {
 #endif
 
 
-  pinMode(ld.Channel, OUTPUT);
+  pinMode(getChannel(ld.Channel), OUTPUT);
   //Ensures that the interval ramping is even by adding the remainder to the
   //brightness before we beging ramping up
   extra = ld.MaxBrightness % interval;
@@ -82,7 +82,7 @@ void flash_led(int interval = 40) {
       level += 1;
       extra --;
     }
-    analogWrite(ld.Channel, level);
+    analogWrite(getChannel(ld.Channel), level);
 #ifdef DEBUG
     Serial.print("      level "); Serial.println(level);
 #endif
@@ -112,7 +112,7 @@ void flash_led(int interval = 40) {
     if (i == interval) {
       level = 0;
     }
-    analogWrite(ld.Channel, level);
+    analogWrite(getChannel(ld.Channel), level);
 #ifdef DEBUG
     Serial.print("      level "); Serial.println(level);
 #endif
@@ -149,6 +149,11 @@ void exec_flash(char *dat) {
   int led = fl.LED;
   ld.Get(led);
 
+  if(getChannel(ld.Channel) == -1){
+    Serial.println("LED Channel Error");
+    return;
+  }
+  
   char num[2];
   itoa(fl.Number, num, 10);
   Serial.print("Executing flash number ");
@@ -200,7 +205,7 @@ void exec_pattern(char* dat) {
   int offDur = pt.FlashPatternInterval;
   //Display the pattern message
   disp_pattern();
-  pt.DisplayPattern();
+  pt.Display();
   int index = 0, FListLen;
   FListLen = CalcFlashListLen();
 #ifdef DEBUG
@@ -221,6 +226,10 @@ void exec_pattern(char* dat) {
     Serial.print("  offDur "); Serial.println(offDur);
 #endif
     ld.Get(fl.LED);
+    if(getChannel(ld.Channel) == -1){
+      Serial.println("LED Channel Error");
+      return;
+    }
 #ifdef DEBUG
     Serial.print("  LED number "); Serial.println(ld.Number);
 #endif
@@ -261,9 +270,14 @@ void exec_random_pat(char* dat) {
   Serial.println("Generating Random Flashes");
   while (true) {
     gen_rand_flash();
-    ld.Get(fl.LED);
-    fl.DisplayFlash();
-    flash_led();
+    if(ld.isDefined(fl.LED)){
+      ld.Get(fl.LED);
+      fl.Display();
+      flash_led();
+    }else{
+      Serial.println("Invalid default LED. Please configure LED 1");
+    }
+    
   }
 }
 
