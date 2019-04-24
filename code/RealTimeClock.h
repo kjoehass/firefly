@@ -5,7 +5,7 @@
  *
  * @author K. Joseph Hass
  * @date Created: 2019-03-07T13:57:19-0500
- * @date Last modified: 2019-04-17T12:16:34-0400
+ * @date Last modified: 2019-04-22T10:50:02-0400
  *
  * @copyright Copyright (C) 2019 Kenneth Joseph Hass
  *
@@ -32,7 +32,7 @@
  *
  *        RTC functions will act as stubs, returning fake data
  */
-#define FAKE_RTC
+//#define FAKE_RTC
 
 /**
  * @class  RealTimeClock
