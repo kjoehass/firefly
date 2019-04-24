@@ -9,7 +9,7 @@ static Flash fl;
 static Pattern pt;
 extern int toks[20];
 
-
+int getChannel(int num);
 void display_LEDs();
 void display_Flashes();
 void display_Patterns();

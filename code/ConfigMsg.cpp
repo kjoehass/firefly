@@ -3,16 +3,17 @@
 #include "ConfigMsg.h"
 #include "RealTimeClock.h"
 #include "TempSensor.h"
+#include "Firefly.h"
 
 int toks[20];
 
-enum Channel{
-  channel1 = 3,
-  channel2 = 5,
-  channel3,
-  channel4 = 9,
-  channel5,
-  channel6,
+enum unoChannel{
+  unoChannel1 = 3,
+  unoChannel2 = 5,
+  unoChannel3,
+  unoChannel4 = 9,
+  unoChannel5,
+  unoChannel6,
 };
 
 /*
@@ -23,12 +24,16 @@ enum Channel{
  * Retuns an integer that refers to the phsical channel
  */
 int getChannel(int num){
-  if(num == 1){return channel1;}
-  else if(num == 2){return channel2;}
-  else if(num == 3){return channel3;}
-  else if(num == 4){return channel4;}
-  else if(num == 5){return channel5;}
-  else{return channel6;}
+#if ARDUINO_IS_UNO == 1
+  if(num == 1){return unoChannel1;}
+  else if(num == 2){return unoChannel2;}
+  else if(num == 3){return unoChannel3;}
+  else if(num == 4){return unoChannel4;}
+  else if(num == 5){return unoChannel5;}
+  else{return unoChannel6;}
+#else
+  return -1;
+#endif
 }
 
 
@@ -42,7 +47,7 @@ void display_LEDs(){
   for(i = 1; i<=ConfigMem::MaxLED; i++){
     if(ld.isDefined(i)){
       ld.Get(i);
-      ld.DisplayLED();
+      ld.Display();
     }
   }
 }
@@ -57,7 +62,7 @@ void display_Flashes(){
   for(i = 1; i<=ConfigMem::MaxFlash; i++){
     if(fl.isDefined(i)){
       fl.Get(i);
-      fl.DisplayFlash();
+      fl.Display();
     }
   }
 }
@@ -72,7 +77,7 @@ void display_Patterns(){
   for(i = 1; i<=ConfigMem::MaxPattern; i++){
     if(pt.isDefined(i)){
       pt.Get(i);
-      pt.DisplayPattern();
+      pt.Display();
     }
   }
 }
@@ -101,10 +106,11 @@ void config_LED(char *dat){
   Serial.println(dat);
   int size = tokenize(dat);
   if(size >= 4){
+    Serial.println(getChannel(toks[2]));
     if((toks[1] < ConfigMem::MaxLED) && (toks[2] < ConfigMem::MaxChannel) && \
-          (toks[3] < 101) && (toks[3] >= 1)){
+          (toks[3] < 101) && (toks[3] >= 1) && (getChannel(toks[2]) != -1)){
       ld.Number = toks[1];
-      ld.Channel = getChannel(toks[2]);
+      ld.Channel = toks[2];
       ld.MaxBrightness = toks[3];
       if(ld.Save()){
         Serial.println("LED Configured");
@@ -150,7 +156,7 @@ void config_Pattern(char *dat){
     if(pt.Save()){
       Serial.println("Pattern Configured");
     }else{
-      Serial.println("Pattern Configuration Error");
+      Serial.println("Pattern Configuration Error.");
     }
   }else{
     Serial.println("Pattern Configuration Error");
