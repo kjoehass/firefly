@@ -1,6 +1,8 @@
 *.[oa]
+*.[sb]#[1-9]
 *.swp
 *.bak
+*.job
 .git
 questions
 papers
