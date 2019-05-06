@@ -268,10 +268,6 @@ UsedLibrary="/home/kjh016/proj/EAGLE/libraries/E14_Arduino_revC.lbr"
 UsedLibrary="/home/kjh016/proj/EAGLE/libraries/InputOutputIO-rev19a-.lbr"
 
 [Win_1]
-Type="Control Panel"
-Number=0
-
-[Win_2]
 Type="Board Editor"
 Number=2
 File="FireflyShield.brd"
@@ -315,7 +311,7 @@ AddLevel=2
 PadsSameType=0
 Layer=1
 
-[Win_3]
+[Win_2]
 Type="Schematic Editor"
 Number=1
 File="FireflyShield.sch"
@@ -360,6 +356,10 @@ PadsSameType=0
 Layer=94
 Views=" 1: -20.7357 -34.1061 270.681 191.27"
 Sheet="1"
+
+[Win_3]
+Type="Control Panel"
+Number=0
 
 [Desktop]
 Screen="1920 1080"
