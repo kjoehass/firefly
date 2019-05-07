@@ -459,15 +459,20 @@ Field Number & Field Name & Description & Format \\ \hline
 
 A \textit{Random Pattern Set Configuration Message} is sent from the host
 computer to the firefly simulator. This message provides the parameters for
-a list of \textit{patterns} that will be executed in a pseudorandom order
-\ref{tab:RandomPatternConfig}.
+a list of \textit{patterns} that will be executed in a pseudorandom order,
+as shown in Table \ref{tab:PatternSetConfig}.
 
-A set (or list) of random \textit{patterns} may contain from 1 to 16 patterns.
+A set (or list) of random \textit{pattern} numbers may contain from 1 to
+\textit{max pattern} patterns.
 Therefore, field 3 in the \textit{Random Pattern Set Configuration Message} may
 be repeated to define the desired patterns. If the \textit{Random Pattern Set
 Configuration Message} specifies fewer than 16 \textit{patterns} then the
 unspecified \textit{patterns} shall have a default \textit{pattern} number of
-0 (zero) and will be ignored.
+0 (zero) and will be ignored. The order in which the \textit{patterns} are
+specified in the \textit{Random Pattern Set} is not significant. Any given
+\textit{pattern} number should appear only once in the \textit{Random Pattern
+Set}; multiple inclusions of the same \textit{pattern} are equivalent to a
+single inclusion of that \textit{pattern}.
 
 \begin{table}[H]
 \centering
