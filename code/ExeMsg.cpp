@@ -1,3 +1,4 @@
+#include "Firefly.h"
 #include "ConfigData.h"
 #include "ConfigMsg.h"
 #include "Arduino.h"
@@ -19,18 +20,19 @@ void exec_led(char *dat) {
   Serial.println(LED_num);
   //Load led code into static led
   bool ret;
-  if (ld.isDefined(LED_num) && (getChannel(ld.Channel) != -1)) {
+  if (ld.isDefined(LED_num)) {
     ld.Get(LED_num);
     //Configure the output pin on the board
+    // TODO verify level is from 0 to 100 KJH
     int illum_lvl = toks[2];
     // TODO map virtual channel to physical pin correctly
-    pinMode(getChannel(ld.Channel), OUTPUT);
+    pinMode(Channel2Pin[ld.Channel], OUTPUT);  // KJH
 
     //Set the illum level of the output pin
     illum_lvl = (int)(ld.MaxBrightness * ((float)(illum_lvl / 100.0)));
-    analogWrite(getChannel(ld.Channel), illum_lvl);
+    analogWrite(Channel2Pin[ld.Channel], illum_lvl);  // KJH
   } else {
-    Serial.println("Invalid LED Number");
+    Serial.println("ERROR");
     return;
   }
 }
@@ -58,7 +60,7 @@ void flash_led(int interval = 40) {
 #endif
 
 
-  pinMode(getChannel(ld.Channel), OUTPUT);
+  pinMode(Channel2Pin[ld.Channel], OUTPUT);   // KJH take this out
   //Ensures that the interval ramping is even by adding the remainder to the
   //brightness before we beging ramping up
   extra = ld.MaxBrightness % interval;
@@ -71,6 +73,9 @@ void flash_led(int interval = 40) {
 
   //Executing flash
   //Calculate the ramp up delay in between level increases
+  // FIXME FIXME FIXME TODO KJH
+  // The error is TOO LARGE for short durations
+  //
   int rampDelay = fl.UpDuration / interval;
 #ifdef DEBUG
   Serial.print("    rampDelay "); Serial.println(rampDelay);
@@ -82,7 +87,7 @@ void flash_led(int interval = 40) {
       level += 1;
       extra --;
     }
-    analogWrite(getChannel(ld.Channel), level);
+    analogWrite(Channel2Pin[ld.Channel], level);  // KJH
 #ifdef DEBUG
     Serial.print("      level "); Serial.println(level);
 #endif
@@ -98,6 +103,9 @@ void flash_led(int interval = 40) {
 
   //Start the loop for the ramp down time
   extra = ld.MaxBrightness % interval;
+  // FIXME FIXME FIXME TODO KJH
+  // The error is TOO LARGE for short durations
+  //
   rampDelay = fl.DownDuration / interval;
 #ifdef DEBUG
   Serial.print("    rampDelay "); Serial.println(rampDelay);
@@ -112,7 +120,7 @@ void flash_led(int interval = 40) {
     if (i == interval) {
       level = 0;
     }
-    analogWrite(getChannel(ld.Channel), level);
+    analogWrite(Channel2Pin[ld.Channel], level);  // KJH
 #ifdef DEBUG
     Serial.print("      level "); Serial.println(level);
 #endif
@@ -149,11 +157,6 @@ void exec_flash(char *dat) {
   int led = fl.LED;
   ld.Get(led);
 
-  if(getChannel(ld.Channel) == -1){
-    Serial.println("LED Channel Error");
-    return;
-  }
-  
   char num[2];
   itoa(fl.Number, num, 10);
   Serial.print("Executing flash number ");
@@ -161,7 +164,9 @@ void exec_flash(char *dat) {
   Serial.print("\n");
 
   while (true) {
-    flash_led();
+    //flash_led();
+    // KJH
+    fl.Execute();
   }
 }
 
@@ -202,83 +207,89 @@ void exec_pattern(char* dat) {
     return;
   }
   pt.Get(pat);
-  int offDur = pt.FlashPatternInterval;
-  //Display the pattern message
-  disp_pattern();
-  pt.Display();
-  int index = 0, FListLen;
-  FListLen = CalcFlashListLen();
-#ifdef DEBUG
-  Serial.print("Flash list length "); Serial.println(FListLen);
-#endif
-  //Engage the pattern loop
   while (true) {
-#ifdef DEBUG
-    Serial.print("  Flash index "); Serial.println(index);
-#endif
-    fl.Get(pt.FlashList[index]);
-#ifdef DEBUG
-    Serial.print("  Flash number "); Serial.println(fl.Number);
-#endif
-    // TODO handle FlashPatternInterval
-    offDur -= fl.InterpulseInterval;
-#ifdef DEBUG
-    Serial.print("  offDur "); Serial.println(offDur);
-#endif
-    ld.Get(fl.LED);
-    if(getChannel(ld.Channel) == -1){
-      Serial.println("LED Channel Error");
-      return;
-    }
-#ifdef DEBUG
-    Serial.print("  LED number "); Serial.println(ld.Number);
-#endif
-    flash_led();
-    index = (index + 1) % FListLen;
-    // TODO insert FlashPatternInterval delay
-    if (index == 0) {
-#ifdef DEBUG
-    Serial.print("  Delay for "); Serial.println(offDur);
-#endif
-      delay(offDur);
-      offDur = pt.FlashPatternInterval;
-    }
+   pt.Execute();
   }
+// KJH 
+// KJH   int offDur = pt.FlashPatternInterval;
+// KJH   /*  KJH moved inside infinite loop
+// KJH     //Display the pattern message
+// KJH     disp_pattern();
+// KJH   */
+// KJH   //pt.Display();        // KJH
+// KJH   int index = 0, FListLen;
+// KJH   FListLen = CalcFlashListLen();
+// KJH #ifdef DEBUG
+// KJH   Serial.print("Flash list length "); Serial.println(FListLen);
+// KJH #endif
+// KJH   //Engage the pattern loop
+// KJH   while (true) {
+// KJH     //Display the pattern message KJH
+// KJH     if (index == 0) {
+// KJH       disp_pattern();
+// KJH     }
+// KJH #ifdef DEBUG
+// KJH     Serial.print("  Flash index "); Serial.println(index);
+// KJH #endif
+// KJH     fl.Get(pt.FlashList[index]);
+// KJH #ifdef DEBUG
+// KJH     Serial.print("  Flash number "); Serial.println(fl.Number);
+// KJH #endif
+// KJH     // TODO handle FlashPatternInterval
+// KJH     offDur -= fl.InterpulseInterval;
+// KJH #ifdef DEBUG
+// KJH     Serial.print("  offDur "); Serial.println(offDur);
+// KJH #endif
+// KJH     ld.Get(fl.LED);
+// KJH #ifdef DEBUG
+// KJH     Serial.print("  LED number "); Serial.println(ld.Number);
+// KJH #endif
+// KJH     flash_led();
+// KJH     index = (index + 1) % FListLen;
+// KJH     // TODO insert FlashPatternInterval delay
+// KJH     if (index == 0) {
+// KJH #ifdef DEBUG
+// KJH       Serial.print("  Delay for "); Serial.println(offDur);
+// KJH #endif
+// KJH       delay(offDur);
+// KJH       offDur = pt.FlashPatternInterval;
+// KJH     }
+// KJH   }
 }
 
-/*
-   Parameters:
-   maxDir: the max diration for a random flash
-
-   The function randomizes numbers between 1 and maxDir
-   to create a random flash to be executed.
-*/
-void gen_rand_flash(int maxDir = 10000) {
-  fl.Number = 0;
-  fl.LED = 1;
-  fl.UpDuration = random(1, maxDir);
-  fl.OnDuration = random(1, maxDir);
-  fl.DownDuration = random(1, maxDir);
-  int tot = fl.UpDuration + fl.OnDuration + fl.DownDuration;
-  fl.InterpulseInterval = random(tot, tot + maxDir);
-}
+///*
+//   Parameters:
+//   maxDir: the max diration for a random flash
+//
+//   The function randomizes numbers between 1 and maxDir
+//   to create a random flash to be executed.
+//*/
+//void gen_rand_flash(int maxDir = 10000) {
+//  fl.Number = 0;
+//  fl.LED = 1;
+//  fl.UpDuration = random(1, maxDir);
+//  fl.OnDuration = random(1, maxDir);
+//  fl.DownDuration = random(1, maxDir);
+//  int tot = fl.UpDuration + fl.OnDuration + fl.DownDuration;
+//  fl.InterpulseInterval = random(tot, tot + maxDir);
+//}
 
 /*
 
 */
 void exec_random_pat(char* dat) {
-  Serial.println("Generating Random Flashes");
-  while (true) {
-    gen_rand_flash();
-    if(ld.isDefined(fl.LED)){
-      ld.Get(fl.LED);
-      fl.Display();
-      flash_led();
-    }else{
-      Serial.println("Invalid default LED. Please configure LED 1");
-    }
-    
+  Serial.println("Generating Random Patterns");
+  tokenize(dat);
+
+  //Load the pattern set from EPROM
+  int set = toks[1];
+  if (!rd.isDefined(set)) {
+    Serial.print("Invalid Random Pattern Set Number");
+    return;
   }
+  rd.Get(set);
+  rd.Display();
+  rd.Execute();
 }
 
 void exec_event_msg(char* dat) {
