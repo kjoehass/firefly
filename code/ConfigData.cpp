@@ -17,7 +17,7 @@
 
    @author K. Joseph Hass
    @date Created: 2019-02-20T08:28:10-0500
-   @date Last modified: 2019-05-07T09:51:10-0400
+   @date Last modified: 2019-05-09T14:14:28-0400
 
    @copyright Copyright (C) 2019 Kenneth Joseph Hass
 
@@ -35,7 +35,11 @@
 #include <EEPROM.h>
 #include "Firefly.h"
 #include "ConfigData.h"
+#include "ConfigMsg.h"
+#include "RealTimeClock.h"
+#include "TempSensor.h"
 #include "Arduino.h"
+
 
 //
 // The initial value of the checksum is chosen so that the sum of erased
@@ -44,12 +48,12 @@
 //
 #define CHKSUM_INIT 0xA5
 
+namespace {
 //
 // The number of bytes reserved in EEPROM for each configuration data
 // structure. The EEPROM in the ATmega chips has a page size of 4 bytes
 // so all allocations are in multiples of 4 bytes.
 //
-namespace {
 const uint8_t PatternSize = 32;  //!< # of EEPROM bytes for a pattern
 const uint8_t FlashSize = 16;    //!< # of EEPROM bytes for a flash
 const uint8_t LEDSize = 4;       //!< # of EEPROM bytes for an LED
@@ -69,12 +73,21 @@ uint8_t  ConfigMem::MaxEvent       = 0;
 uint8_t  ConfigMem::MaxFlash       = 0;
 uint8_t  ConfigMem::MaxLED         = 0;
 uint8_t  ConfigMem::MaxPattern     = 0;
-uint8_t  ConfigMem::MaxPatternSet = 0;
+uint8_t  ConfigMem::MaxPatternSet  = 0;
 uint16_t ConfigMem::PatternBase    = 0;
 uint16_t ConfigMem::FlashBase      = 0;
 uint16_t ConfigMem::LEDBase        = 0;
 uint16_t ConfigMem::EventBase      = 0;
 uint16_t ConfigMem::RandomBase     = 0;
+
+
+
+#if ARDUINO_IS_UNO == 1
+const uint16_t  MaxPWM      = 255;
+#else
+#error "Arduino model is undefined"
+const uint16_t  MaxPWM      = 0;
+#endif
 
 /**
    @fn    WriteByte
@@ -152,6 +165,24 @@ static uint16_t Read2Byte(uint16_t * address_p, uint8_t * checksum_p)
   (*address_p)++;
   word += (byte << 8);
   return word;
+}
+
+/**
+  @fn    MSDelay
+  @brief Waits for specified milliseconds
+
+  @param time milliseconds to wait
+*/
+void MSDelay(uint16_t time)
+{
+  static unsigned long StartTime;
+  if (time == 0) {
+    StartTime = millis();
+    while (millis() == StartTime) {};
+  } else {
+    while ((millis() - StartTime) < time) {};
+  }
+  StartTime = millis();
 }
 
 /**
@@ -306,6 +337,40 @@ void LED::Display()
   Msg += "," + String(MaxBrightness);
 #endif
   Serial.println(Msg);
+}
+/**
+  @fn    LED::setLevel
+  @brief Sets the level of the LED's illumination
+
+         The desired level can be from 0 to 100%, and the configured
+         maximum brightness of an LED can be from 0 to 100%. Conceptually,
+         these two values can be multiplied, and their product divided by 10000
+         to get a fraction between 0 and 1. The fraction is then multiplied by
+         the maximum PWM value to get the desired PWM value. Since we are
+         working with integer arithmetic, all of the multiplications are done
+         first, then half the value of the remaining bit is added for rounding,
+         then the result is divided by 10000.
+
+         Some Arduino channels do not fully extinguish for a PWM value of 0
+         so we brute-force change them to digital channels with a low output.
+
+  @param level integer 0 to 100, desired illumination level
+*/
+void LED::setLevel(uint8_t level)
+{
+
+  uint32_t PWM_Value = level * MaxBrightness;
+  PWM_Value *= MaxPWM;
+  PWM_Value = PWM_Value + 5000;
+  PWM_Value = PWM_Value / 10000;
+  if (PWM_Value > MaxPWM) {
+    PWM_Value = MaxPWM;
+  }
+  if (PWM_Value == 0) {
+    digitalWrite(Channel2Pin[ld.Channel], LOW);
+  } else {
+    analogWrite(Channel2Pin[ld.Channel], PWM_Value);
+  }
 }
 
 /**
@@ -466,6 +531,43 @@ uint16_t Flash::GetInterpulseInterval(uint8_t flashnum)
 }
 
 /**
+  @fn    Flash::Execute
+  @brief Executes the flash
+
+         Uses 10ms timesteps, all durations should be multiples of 10ms
+*/
+void Flash::Execute()
+{
+  const int TimePerStep = 10; //<! milliseconds per timestep
+  int Steps, StepRound;
+
+  ld.Get(LED);
+
+  Steps = UpDuration / TimePerStep;
+  StepRound = Steps / 2;
+
+  MSDelay(0);
+
+  for (int step = 0; step < Steps; step++) {
+    ld.setLevel((step * 100 + StepRound) / Steps);
+    MSDelay(10);
+  }
+
+  ld.setLevel(100);
+  MSDelay(OnDuration);
+
+  Steps = DownDuration / TimePerStep;
+  StepRound = Steps / 2;
+
+  for (int step = Steps; step > 0; step--) {
+    ld.setLevel(((step - 1) * 100 + StepRound) / Steps);
+    MSDelay(10);
+  }
+
+  ld.setLevel(0);
+  MSDelay(InterpulseInterval - UpDuration - OnDuration - DownDuration);
+}
+/**
    @fn      Pattern::Save
    @brief   Saves an Pattern object to EEPROM
 
@@ -598,7 +700,7 @@ void Pattern::Display(void)
   Msg += "FlashPatternInterval: " + String(FlashPatternInterval) + "   ";
   Msg += "FlashList:";
   int i = 0;
-  while (FlashList[i] > 0) {
+  while ((i < 16) && (FlashList[i] > 0)) {
     Msg += " " + String(FlashList[i]);
     i++;
   }
@@ -606,12 +708,33 @@ void Pattern::Display(void)
   Msg += "p," + String(Number);
   Msg += "," + String(FlashPatternInterval);
   int i = 0;
-  while (FlashList[i] > 0) {
-    Msg += "," + String(FlashList[i]);
-    i++;
+  while ((i < 16) && (FlashList[i] > 0)) {
+    Msg += "," + String(FlashList[i++]);
   }
 #endif
   Serial.println(Msg);
+}
+
+/**
+  @fn    Pattern::Execute
+  @brief Executes the pattern
+
+*/
+void Pattern::Execute()
+{
+  uint16_t TimeLeft = FlashPatternInterval;
+
+  disp_pattern();
+
+  for (int i = 0; i < 16; i++) {
+    if (FlashList[i] != 0) {
+      fl.Get(FlashList[i]);
+      TimeLeft -= fl.InterpulseInterval;
+      fl.Execute();
+    }
+  }
+
+  MSDelay(TimeLeft);
 }
 
 /**
@@ -633,7 +756,7 @@ bool RandPatternSet::Save(void)
     return false;
   }
   for (int i = 1; i <= ConfigMem::MaxPattern; i++) {
-    if (((PatternSet && (1 << i)) != 0) && (! Pattern::isDefined(i))) {
+    if (((PatternSet & (1 << (i - 1))) != 0) && (! Pattern::isDefined(i))) {
       return false;
     }
   }
@@ -733,4 +856,20 @@ void RandPatternSet::Display(void)
     }
   }
   Serial.println(Msg);
+}
+
+/**
+  @fn    RandPatternSet::Execute
+  @brief Executes the set of random patterns
+
+*/
+void RandPatternSet::Execute(void)
+{
+  while (true) {
+    int patnum = random(1, 17); // max value is exclusive
+    if ((rd.PatternSet & (1 << (patnum - 1))) != 0) {
+      pt.Get(patnum);
+      pt.Execute();
+    }
+  }
 }
