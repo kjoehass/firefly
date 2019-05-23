@@ -136,6 +136,10 @@ void config_Flash(char *dat) {
     fl.UpDuration = toks[3];
     fl.OnDuration = toks[4];
     fl.DownDuration = toks[5];
+    if((fl.UpDuration % 10 != 0) || (fl.DownDuration % 10 != 0)){
+      Serial.println("Up and Down Duration must be multiples of ten.\nFlash not configured.");
+      return;
+    }
     fl.InterpulseInterval = toks[6];
     if (fl.Save()) {
       Serial.println("Flash Configured");
