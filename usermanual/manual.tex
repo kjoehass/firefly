@@ -1,0 +1,154 @@
+%        File: manual.tex
+%     Created: Thu May 23 08:00 AM 2019 E
+%
+\documentclass[letterpaper,11pt]{article}
+\usepackage[leqno]{amsmath}
+\usepackage{mathptmx,courier}
+\usepackage[scaled]{helvet}
+\usepackage[inter-unit-product=\ensuremath{{}\cdot{}},per-mode=symbol,separate-uncertainty,binary-units]{siunitx}
+\usepackage[nohead,letterpaper,lmargin=0.75in,rmargin=0.75in,tmargin=0.75in,bmargin=0.75in]{geometry}
+\usepackage{paralist}
+\usepackage[pdftex]{graphicx}
+\usepackage[hyperfigures=false,bookmarks=false,pdftex,colorlinks,linkcolor=black,urlcolor=blue]{hyperref}
+\usepackage{fancyhdr,lastpage}
+\usepackage[cachedir=/home/kjh016/tmp/mintedcache]{minted}
+\usepackage{fancyvrb}
+\newcommand\userinput[1]{\textbf{#1}}
+\usepackage{tcolorbox}
+
+\graphicspath{{graphics/}}
+
+\ifpdf\pdfinfo{
+  /Title (Firefly Simulator User's Manual) %FIXME
+  /Author (K. J. Hass, Bucknell University) %FIXME
+/Keywords () }
+\fi
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{Page \thepage\ of \pageref{LastPage}}
+\renewcommand\headrulewidth{0pt}
+
+\begin{document}
+\Large
+\centerline{Firefly Simulator User's Manual}
+\normalsize
+\subsection*{Connections}
+\subsubsection*{Power/USB}
+\subsubsection*{Physical LEDs}
+
+A \textit{physical LED} consists of a small circuit board connected to a cable
+that can be connected to the simulator. An actual LED is mounted on the circuit
+board, as well as other components that are used to regulate and limit the
+electrical current through the LED.
+
+Up to six physical LEDs can be simultaneously connected to the simulator, by
+plugging their cables into the six \textit{LED channel} connectors on the side
+of the simulator.
+
+It is the user's responsibility to mark each physical LED with a unique
+identifier and maintain records of the optical characteristics of that LED.
+It is also the user's responsibility to track which physical LED is connected
+to each LED channel.
+
+\subsubsection*{Abort Button}
+
+\subsection*{Communications}
+
+The firefly simulator communicates with a host computer using a serial
+communications interface, which is called a \texttt{COM} port in Windows or a
+\texttt{/dev/tty} in Linux and MacOS. This interface can be used to configure
+the simulator and to log its operation.
+
+The simulator has been programmed to operate at 9600 baud with 8 data bits,
+no parity, 1 stop bit, and no flow control.
+
+The user can send commands to the simulator using a terminal simulator program
+on the host computer, and the simulator's responses will also appear on the
+terminal. The command messages sent by the host computer are simple strings of
+text. Each command begins with one or two \textbf{capital} letters, followed
+by some number of \textbf{fields} or \textbf{parameters} for the command. The
+different fields of a message are separated by a \textbf{comma}. Each command
+must be terminated with a carriage return and/or linefeed, which are typically
+added just by pressing the ``\texttt{Enter}'' key.
+
+\subsection*{Virtual LEDs}
+
+The simulator software has no information about what, if any, physical LEDs are
+connected to its LED channels. Instead, the simulator software is configured to
+control \textit{virtual LEDs}. A virtual LED is defined by assigning to it a
+physical LED channel number as well as a maximum brightness value (0 to 100).
+Note that the maximum brightness level is treated as a percentage of the
+maximum current available to the physical LED. For example, if a particular
+physical LED circuit board has been designed to limit the LED current to
+\SI{20}{\milli\ampere}, and then setting the maximum brightness of a virtual
+LED to \texttt{50}, will result in an average LED current of
+\SI{10}{\milli\ampere} when the LED is ``on''.
+
+Each virtual LED has a unique \textit{LED number}, which is simply an integer
+used to identify a particular virtual LED so it can be used later. The
+simulator can typically store up to 16 distinct virtual LED definitions.
+
+Note that a given LED channel (i.e.\ a given physical LED) can be used in more
+than one virtual LED definition. This allows the same physical LED to be used
+at different brightness levels.
+
+The command message used to configure a virtual LED begins with the letter `L'
+and has three fields: the virtual LED number, the LED channel number, and the
+maximum brightness level. The fields must be integer values. For example, the
+commands shown below will first configure virtual LED \#7 to use the physical
+LED on channel 3 with a maximum brightness equivalent to 80\% of its maximum
+possible current. Virtual LED \#1 is then configured to use channel 2 with
+100\% of its maximum current. If the format of the command is correct and the
+fields have appropriate values, then the simulator will respond with
+``\texttt{LED Configured}''. 
+
+\begin{tcolorbox}
+\begin{Verbatim}[commandchars=\\\{\}]
+\userinput{L,7,3,80}
+LED Configured
+\userinput{L,1,2,100}
+LED Configured
+\end{Verbatim}
+\end{tcolorbox}
+
+Note that once configured a virtual LED can be modified simply by rewriting
+its definition. Defining the same virtual LED number multiple times does not
+produce an error but only the last definition will be saved.
+
+The \texttt{DL} (Dump LEDs) command will list all of the virtual LEDs that
+have been configured in the simulator. There are no additional fields for this
+command. Note that each virtual LED is listed using the same format as the
+command used to configure it, except that the first letter is a lower-case
+`l'.
+\begin{tcolorbox}
+\begin{Verbatim}[commandchars=\\\{\}]
+\userinput{DL}
+Saved LEDs
+l,1,2,100
+l,7,3,80
+\end{Verbatim}
+\end{tcolorbox}
+
+The \texttt{XL} (eXecute LED) command can be used to manually turn an LED on
+or off. This command has two fields: the virtual LED number and the desired
+brightness level. The brightness level must be from 0 to 100, and is a
+percentage of the maximum LED current. The commands shown below will turn
+on virtual LED \#1 at 100\% of its possible brightness, and then turn it off.
+\begin{tcolorbox}
+\begin{Verbatim}[commandchars=\\\{\}]
+\userinput{XL,1,100}
+Executing LED 1
+\userinput{XL,1,0}
+Executing LED 1
+\end{Verbatim}
+\end{tcolorbox}
+
+
+\subsection*{Flashes}
+\subsection*{Patterns}
+\subsection*{Random Pattern Sets}
+\subsection*{Using the Keypad}
+\end{document}
+
+
