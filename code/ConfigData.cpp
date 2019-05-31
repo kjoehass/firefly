@@ -17,7 +17,7 @@
 
    @author K. Joseph Hass
    @date Created: 2019-02-20T08:28:10-0500
-   @date Last modified: 2019-05-09T14:14:28-0400
+   @date Last modified: 2019-05-31T17:04:51-0400
 
    @copyright Copyright (C) 2019 Kenneth Joseph Hass
 
@@ -225,6 +225,25 @@ void ConfigMem::Init(void)
   LEDBase = FlashBase + (MaxFlash * FlashSize);
   EventBase = LEDBase + (MaxLED * LEDSize);
   RandomBase = EventBase + (MaxEvent * EventSize);
+}
+
+/**
+   @fn      ConfigMem::Display
+   @brief   Print the Capacity Response Message
+
+*/
+void ConfigMem::Display(void)
+{
+  String Msg = "c";
+  Msg += "," + String(RealTimeClock::DateTime());
+  Msg += "," + String(TempSensor::Temperature());
+  Msg += "," + String(MaxChannel);
+  Msg += "," + String(MaxLED);
+  Msg += "," + String(MaxFlash);
+  Msg += "," + String(MaxEvent);
+  Msg += "," + String(MaxPattern);
+  Msg += "," + String(MaxPatternSet);
+  Serial.println(Msg);
 }
 
 /**

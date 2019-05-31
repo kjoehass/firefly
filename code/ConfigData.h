@@ -16,7 +16,7 @@
 
    @author K. Joseph Hass
    @date Created: 2019-02-10T13:26:37-0500
-   @date Last modified: 2019-05-09T14:14:25-0400
+   @date Last modified: 2019-05-31T17:10:14-0400
 
    @copyright Copyright (C) 2019 Kenneth Joseph Hass
 
@@ -48,6 +48,7 @@
 class ConfigMem {
   public:
     static void Init(void);
+    static void Display(void);
 
     static uint8_t MaxChannel;    //!< Physical PWM pins available
     static uint8_t MaxEvent;      //!< Max number of events in EEPROM
