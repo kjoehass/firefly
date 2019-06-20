@@ -112,7 +112,7 @@ class Pattern:
         return msg
 
     def dump(self):
-        msg = "P,{0}".format(
+        msg = "P,{0},{1}".format(
             self.number, self.flash_pattern_interval)
         for i in range(len(self.flash_list)):
             if self.flash_list[i]:
