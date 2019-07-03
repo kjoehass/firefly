@@ -1,8 +1,11 @@
 import copy
 import serial
 import config
+import tkinter as tk
 from serial.tools import list_ports
+import startpage as strtpg
 import firefly_data as fd
+import firefly_gui as fg
 
 class Arduino:
 
@@ -42,6 +45,10 @@ class Arduino:
         response = self.comport.readline()
 
         fields = response.split(b',')
+
+        config.log_area.insert(tk.END,
+                               "=== Date/time: {0}   Temp: {1}C\n".format(
+                               fields[1].decode(), fields[2].decode()))
 
         fields = fields[3:]
         fields = [int(field) for field in fields]
@@ -108,3 +115,26 @@ class Arduino:
             if not response:
                 break
             config.pattern_set_from_response(response.decode())
+
+    def configure(self):
+        """Configure the simulator from the config.xxxxx arrays"""
+
+        arrays = [config.LEDs, config.flashes, config.patterns,
+                  config.pattern_sets]
+
+        for thisarray in arrays:
+            for thisitem in thisarray:
+                if thisitem:
+                    self.comport.write(thisitem.dump().encode())
+                    config.log_area.insert(tk.END, thisitem.dump())
+                    while True:
+                        response = self.comport.readline()
+                        if b'Configured' in response:
+                            break
+                        if b'Error' in response:
+                            config.log_area.insert(tk.END, response)
+                            return
+                        if not response:
+                            config.log_area.insert(tk.END, "No response!\n")
+                            return
+            config.log_area.update_idletasks()
