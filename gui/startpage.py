@@ -43,6 +43,7 @@ class StartPage(tk.Frame):
 """\
 Information messages appear here.
 """)
+        config.log_area = self.log_area  #hack! get access from other code
 
     def on_fromsim(self):
         self.log_area.delete('1.0',tk.END)
@@ -84,7 +85,22 @@ Information messages appear here.
 
 
     def on_tosim(self):
-        pass
+        self.log_area.delete('1.0',tk.END)
+
+        ARD = ac.Arduino()
+        if (ARD.portname):
+            self.log_area.insert(tk.END,"=== Found a simulator (")
+            self.log_area.insert(tk.END,ARD.board)
+            self.log_area.insert(tk.END,") on "+ARD.portname+'\n')
+            self.log_area.update_idletasks()
+        else:
+            self.log_area.insert(tk.END,"=== No simulator found!\n")
+            return
+
+        ARD.get_capacity()
+        ARD.configure()
+
+        self.log_area.insert(tk.END,"=== Download finished")
 
     def on_fromfile(self):
         self.log_area.delete('1.0',tk.END)
@@ -118,21 +134,16 @@ Information messages appear here.
         self.log_area.insert(tk.END, "Writing to " + filename)
         outfile = open(filename, 'w')
 
-        for this in config.LEDs:
-            if this:
-                outfile.write(this.dump())
+        arrays = [config.LEDs, config.flashes, config.patterns,
+                  config.pattern_sets]
 
-        for this in config.flashes:
-            if this:
-                outfile.write(this.dump())
-
-        for this in config.patterns:
-            if this:
-                outfile.write(this.dump())
-
-        for this in config.pattern_sets:
-            if this:
-                outfile.write(this.dump())
+        for thisarray in arrays:
+            for thisitem in thisarray:
+                if thisitem:
+                    outfile.write(thisitem.dump())
 
         outfile.close()
         self.log_area.insert(tk.END, "\nDone")
+
+    def update_config(self):
+        pass
