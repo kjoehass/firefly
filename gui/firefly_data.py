@@ -17,10 +17,12 @@ class LED:
         self.number, self.channel, self.maxbrightness = fields
 
     def display(self):
+        """Return a human-readable string"""
         return("LED {0}: channel={1} max brightness={2}\n".format( \
                self.number, self.channel, self.maxbrightness))
 
     def dump(self):
+        """Return a simulator-format configuration string"""
         return("L,{0},{1},{2}\n".format( \
                self.number, self.channel, self.maxbrightness))
 
