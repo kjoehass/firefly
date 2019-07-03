@@ -18,6 +18,7 @@ class FlashConfig(tk.Frame):
         self.dn_dur = tk.DoubleVar()
         self.int_pls_int = tk.DoubleVar()
 
+        self.led_button = [None] * 16
         self.flash_tag = tk.StringVar()
         """
         Radiobuttons to select one of the flashes
@@ -40,20 +41,12 @@ class FlashConfig(tk.Frame):
         led_label.grid(column=1, row=1)
         self.sel_led = tk.IntVar()
         for i in range(1, (config.max_led+1)):
-            if config.LEDs[i-1]:
-                pick_led = tk.Radiobutton(self,
-                                          text=str(i),
-                                          width=2,
-                                          variable=self.sel_led,
-                                          value=i,
-                                          command=self.on_led_select)
-            else:
-                pick_led = tk.Radiobutton(self,
-                                          text=str(i),
-                                          width=2,
-                                          value=config.max_led+1,
-                                          state=tk.DISABLED)
-
+            self.led_button[i-1] = tk.Radiobutton(self,
+                                      text=str(i),
+                                      width=2,
+                                      variable=self.sel_led,
+                                      value=i,
+                                      command=self.on_led_select)
             pick_led.grid(column=1, row=i+1, sticky="w")
         """
         The graphical representation of the flash. The y-axis is from 0 to
@@ -157,6 +150,17 @@ class FlashConfig(tk.Frame):
         """
         self.int_pls_int.set(1.0)
 
+
+    def update_config(self):
+        for i in range(1, (config.max_led+1)): 
+            if config.LEDs[i-1]:
+                self.led_button[i-1].config(value=i,
+                                            state=tk.NORMAL)
+            else:
+                self.led_button[i-1].config(value=config.max_led+1,
+                                            state=tk.DISABLED)
+
+
     """
     Update the graph whenever one of the scale sliders is moved or a different
     flash is selected
@@ -171,16 +175,18 @@ class FlashConfig(tk.Frame):
             self.flash_img.delete(self.image_id)
             self.flash_img.delete(self.xaxis_max)
 
+        """
+        Make sure the minimum interpulse interval is at least as long as
+        the sum of the up, on, and down durations
+        """
+        min_ipi = self.up_dur.get() + self.on_dur.get() \
+                  + self.dn_dur.get()
+        # round to 0.5s
+        min_ipi = math.ceil(min_ipi*2.0)/2.0
+        if self.int_pls_int.get() < min_ipi:
+            self.int_pls_int.set(min_ipi)
+
         if self.int_pls_int.get() > 0:
-            """
-            Make sure the minimum interpulse interval is at least as long as
-            the sum of the up, on, and down durations
-            """
-            min_ipi = self.up_dur.get() + self.on_dur.get() \
-                      + self.dn_dur.get()
-            min_ipi = math.ceil(min_ipi*2.0)/2.0
-            if self.int_pls_int.get() < min_ipi:
-                self.int_pls_int.set(min_ipi)
             """
             Calculate points on PWL graph
             """
