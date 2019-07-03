@@ -11,6 +11,7 @@ class PatternConfig(tk.Frame):
         self.patt_tag = tk.StringVar()
         self.flsh_patt_int = tk.DoubleVar()
         self.flsh_list = [None] * 16
+        self.flsh_button = [None] * 16
         self.sel_patt = tk.IntVar()
         self.sel_fle = tk.IntVar()
         self.sel_flsh = tk.IntVar()
@@ -123,32 +124,38 @@ class PatternConfig(tk.Frame):
         nextrow = nextrow + 1
 
         for i in range(1, (config.max_flash+1)): 
-            if config.flashes[i-1]:
-                pick_flsh = tk.Radiobutton(self,
-                                           text=str(i),
-                                           width=2,
-                                           variable=self.sel_flsh,
-                                           value=i,
-                                           command=self.on_flsh_select)
-            else:
-                pick_flsh = tk.Radiobutton(self,
-                                           text=str(i),
-                                           width=2,
-                                           value=config.max_flash+1,
-                                           state=tk.DISABLED)
+            self.flsh_button[i-1] = tk.Radiobutton(self,
+                                                 text=str(i),
+                                                 width=2,
+                                                 variable=self.sel_flsh,
+                                                 value=i,
+                                                 command=self.on_flsh_select)
+            self.flsh_button[i-1].grid(column=i-1, row=nextrow, sticky="w")
 
-            pick_flsh.grid(column=i-1, row=nextrow, sticky="w")
+    def update_config(self):
+        for i in range(1, (config.max_flash+1)): 
+            if config.flashes[i-1]:
+                self.flsh_button[i-1].config(value=i,
+                                             state=tk.NORMAL)
+            else:
+                self.flsh_button[i-1].config(value=config.max_flash+1,
+                                             state=tk.DISABLED)
 
     """
     Update the graph whenever a different flash is selected
     """
-    def on_flsh_select(self, value):
+    def on_flsh_select(self):
         """
         Redraw the graph of the pattern. The x-axis is also redrawn in case
         the flash pattern interval changes.
         """
         self.patt_img.delete("flash")
         self.patt_img.delete("xaxis")
+
+        """
+        Update the flash list
+        """
+        self.flsh_list[self.sel_fle.get()-1] = self.sel_flsh.get()
 
         """
         Make sure the minimum flash pattern interval is at least as long as
@@ -226,10 +233,16 @@ class PatternConfig(tk.Frame):
                     self.flsh_list[i] = thispatt.flash_list[i]
             self.sel_fle.set(1)
 
-        self.on_flsh_select(self)
+        self.on_flsh_select()
 
+    """
+    Handle selection of a particular flash list entry
+    """
     def on_fle_select(self):
-        pass
+        """
+        Update the selected flash, if any
+        """
+        self.sel_flsh.set(self.flsh_list[self.sel_fle.get()-1])
 
 #    def update_tag(self): # FIXME
 #        key = "p,{0},{1},{2},{3}".format(int(self.up_dur.get()*1000),
