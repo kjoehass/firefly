@@ -73,6 +73,7 @@ class SimGui(tk.Tk):
         '''Show a frame for the given page name'''
         frame = self.frames[page_name]
         frame.tkraise()
+        frame.update_config()
 
 if __name__ == "__main__":
 
