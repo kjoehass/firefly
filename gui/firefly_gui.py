@@ -3,6 +3,7 @@ from tkinter import font as tkfont
 
 import config
 import arduino_config as ac
+import led_config as lcfg
 import flash_config as fcfg
 import patt_config as pcfg
 import startpage as strtpg
@@ -12,10 +13,15 @@ class ButtonFrame(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         start_button = tk.Button(self,
-text="Start",
+                                 text="Start",
                                  command=lambda: \
                                  parent.show_frame("StartPage"))
         start_button.pack(side="left")
+        cfg_led_button = tk.Button(self,
+                                   text="LED Config",
+                                   command=lambda: \
+                                   parent.show_frame("LEDConfig"))
+        cfg_led_button.pack(side="left")
         cfg_flsh_button = tk.Button(self,
                                     text="Flash Config",
                                     command=lambda: \
@@ -58,12 +64,15 @@ class SimGui(tk.Tk):
 
         self.frames["StartPage"] = strtpg.StartPage(parent=container,
                                                     controller=self)
+        self.frames["LEDConfig"] = lcfg.LEDConfig(parent=container,
+                                                  controller=self)
         self.frames["FlashConfig"] = fcfg.FlashConfig(parent=container,
                                                       controller=self)
         self.frames["PatternConfig"] = pcfg.PatternConfig(parent=container,
                                                           controller=self)
 
         self.frames["StartPage"].grid(row=0, column=0, sticky="nsew")
+        self.frames["LEDConfig"].grid(row=0, column=0, sticky="nsew")
         self.frames["FlashConfig"].grid(row=0, column=0, sticky="nsew")
         self.frames["PatternConfig"].grid(row=0, column=0, sticky="nsew")
 
