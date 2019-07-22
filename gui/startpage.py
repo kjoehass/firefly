@@ -105,7 +105,9 @@ Information messages appear here.
     def on_fromfile(self):
         self.log_area.delete('1.0',tk.END)
         filename = tkfd.askopenfilename(defaultextension='.csv',
-                                        title="Load configuration file")
+                                        title="Load configuration file",
+                                        filetypes = (("csv files","*.csv"),
+                                                     ("all files","*.*")))
 
         self.log_area.insert(tk.END, "Reading from " + filename + '\n')
         infile = open(filename, 'rt')  # read as text, not binary
@@ -130,7 +132,9 @@ Information messages appear here.
     def on_tofile(self):
         self.log_area.delete('1.0',tk.END)
         filename = tkfd.asksaveasfilename(defaultextension='.csv',
-                                          title="Save configuration file")
+                                          title="Save configuration file",
+                                          filetypes = (("csv files","*.csv"),
+                                                       ("all files","*.*")))
         self.log_area.insert(tk.END, "Writing to " + filename)
         outfile = open(filename, 'w')
 
