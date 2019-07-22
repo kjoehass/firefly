@@ -57,20 +57,6 @@ class Arduino:
             = fields
         config.erase_config()
 
-#    def get_leds(self):
-#        """
-#        Get all of the configured LEDs from the Arduino
-#        """
-#        thisled = fd.LED()
-#        self.comport.write(b'DL\r\n')
-#
-#        config.LEDs = [None] * config.max_led
-#        while True:
-#            response = self.comport.readline()
-#            if not response:
-#                break
-#            thisled.from_response(response.decode())
-#            config.LEDs[thisled.number-1] = copy.copy(thisled)
 
     def get_leds(self):
         """
