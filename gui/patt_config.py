@@ -10,8 +10,8 @@ class PatternConfig(tk.Frame):
 
         self.patt_tag = tk.StringVar()
         self.flsh_patt_int = tk.DoubleVar()
-        self.flsh_list = [None] * 16
-        self.flsh_button = [None] * 16
+        self.flsh_list = [None] * (16+1)
+        self.flsh_button = [None] * (16+1)
         self.sel_patt = tk.IntVar()
         self.sel_fle = tk.IntVar()
         self.sel_flsh = tk.IntVar()
@@ -124,22 +124,22 @@ class PatternConfig(tk.Frame):
         nextrow = nextrow + 1
 
         for i in range(1, (config.max_flash+1)): 
-            self.flsh_button[i-1] = tk.Radiobutton(self,
+            self.flsh_button[i] = tk.Radiobutton(self,
                                                  text=str(i),
                                                  width=2,
                                                  variable=self.sel_flsh,
                                                  value=i,
                                                  command=self.on_flsh_select)
-            self.flsh_button[i-1].grid(column=i-1, row=nextrow, sticky="w")
+            self.flsh_button[i].grid(column=i-1, row=nextrow, sticky="w")
 
     def update_config(self):
         for i in range(1, (config.max_flash+1)): 
-            if config.flashes[i-1]:
-                self.flsh_button[i-1].config(value=i,
-                                             state=tk.NORMAL)
+            if config.flashes[i]:
+                self.flsh_button[i].config(value=i,
+                                           state=tk.NORMAL)
             else:
-                self.flsh_button[i-1].config(value=config.max_flash+1,
-                                             state=tk.DISABLED)
+                self.flsh_button[i].config(value=config.max_flash+1,
+                                           state=tk.DISABLED)
 
     """
     Update the graph whenever a different flash is selected
@@ -155,7 +155,7 @@ class PatternConfig(tk.Frame):
         """
         Update the flash list
         """
-        self.flsh_list[self.sel_fle.get()-1] = self.sel_flsh.get()
+        self.flsh_list[self.sel_fle.get()] = self.sel_flsh.get()
 
         """
         Make sure the minimum flash pattern interval is at least as long as
@@ -163,9 +163,9 @@ class PatternConfig(tk.Frame):
         """
         min_fpi = 0.0
         for i in range(1, 17):
-            flshnum = self.flsh_list[i-1]
+            flshnum = self.flsh_list[i]
             if flshnum:
-                thisflsh = copy.copy(config.flashes[flshnum-1])
+                thisflsh = copy.copy(config.flashes[flshnum])
                 min_fpi = min_fpi + thisflsh.interpulse_interval/1000.0
 
         min_fpi = math.ceil(min_fpi*2.0)/2.0   # round UP to 0.5s
@@ -185,10 +185,10 @@ class PatternConfig(tk.Frame):
                                       tags="xaxis")
 
         start_x = self.graph_left
-        for i in range(0, 16):
+        for i in range(1, 17):
             flshnum = self.flsh_list[i]
             if flshnum:
-                thisflsh = copy.copy(config.flashes[flshnum-1])
+                thisflsh = copy.copy(config.flashes[flshnum])
                 up_dur = thisflsh.up_duration/1000.0
                 on_dur = thisflsh.on_duration/1000.0
                 dn_dur = thisflsh.down_duration/1000.0
@@ -220,18 +220,18 @@ class PatternConfig(tk.Frame):
     Range of value is 1 to 16
     """
     def on_patt_select(self):
-        thispatt = copy.copy(config.patterns[self.sel_patt.get()-1])
-
         self.patt_tag.set(" ")
-        self.flsh_list = [None] * 16
+        self.flsh_list = [None] * (16+1)
         self.flsh_patt_int.set(0.0)
 
+        thispatt = copy.copy(config.patterns[self.sel_patt.get()])
         if thispatt:
             self.flsh_patt_int.set(thispatt.flash_pattern_interval/1000.0)
-            for i in range(0, 16):
+            for i in range(1, 17):
                 if thispatt.flash_list[i]:
                     self.flsh_list[i] = thispatt.flash_list[i]
             self.sel_fle.set(1)
+            self.sel_flsh.set(self.flsh_list[1])
 
         self.on_flsh_select()
 
@@ -242,7 +242,7 @@ class PatternConfig(tk.Frame):
         """
         Update the selected flash, if any
         """
-        self.sel_flsh.set(self.flsh_list[self.sel_fle.get()-1])
+        self.sel_flsh.set(self.flsh_list[self.sel_fle.get()])
 
 #    def update_tag(self): # FIXME
 #        key = "p,{0},{1},{2},{3}".format(int(self.up_dur.get()*1000),
@@ -250,7 +250,3 @@ class PatternConfig(tk.Frame):
 #                                         int(self.dn_dur.get()*1000),
 #                                         int(self.flsh_patt_int.get()*1000))
 #        config.tags[key] = self.patt_tag.get()
-
-if __name__ == "__main__":
-    WINDOW = PatternConfig()
-    WINDOW.mainloop()

@@ -47,7 +47,7 @@ class FlashConfig(tk.Frame):
                                       variable=self.sel_led,
                                       value=i,
                                       command=self.on_led_select)
-            pick_led.grid(column=1, row=i+1, sticky="w")
+            self.led_button[i-1].grid(column=1, row=i+1, sticky="w")
         """
         The graphical representation of the flash. The y-axis is from 0 to
         100%, the x-axis is from 0 to the end of the interpulse interval.
@@ -153,7 +153,7 @@ class FlashConfig(tk.Frame):
 
     def update_config(self):
         for i in range(1, (config.max_led+1)): 
-            if config.LEDs[i-1]:
+            if config.LEDs[i]:
                 self.led_button[i-1].config(value=i,
                                             state=tk.NORMAL)
             else:
@@ -215,22 +215,13 @@ class FlashConfig(tk.Frame):
                                                           self.graph_left,
                                                           self.graph_bot,
                                                           fill='#A2FF00')
-            #for i in range(1, int(self.int_pls_int.get())):
-            #    point = (i/self.int_pls_int.get()) * self.graph_width \
-            #            + self.graph_left
-            #   self.flash_img.create_line(point,
-            #                              self.graph_bot,
-            #                              point,
-            #                              self.graph_top,
-            #                              dash=(3,5))
-
 
     """
     Handle selection of a particular flash
     Range of value is 1 to 16
     """
     def on_flsh_select(self):
-        thisflsh = copy.copy(config.flashes[self.sel_flsh.get()-1])
+        thisflsh = copy.copy(config.flashes[self.sel_flsh.get()])
 
         self.flash_tag.set(" ")
 
@@ -264,7 +255,7 @@ class FlashConfig(tk.Frame):
     Update info displayed on the canvas
     """
     def on_led_select(self):
-        thisled = copy.copy(config.LEDs[self.sel_led.get()-1])
+        thisled = copy.copy(config.LEDs[self.sel_led.get()])
 
         if thisled:
             self.flash_img.itemconfigure(self.led_info_id, \
@@ -281,8 +272,3 @@ class FlashConfig(tk.Frame):
                                          int(self.int_pls_int.get()*1000))
         config.tags[key] = self.flash_tag.get()
 
-if __name__ == "__main__":
-    ARD = ac.Arduino()
-    ARD.get_flashes()
-    WINDOW = FlashConfig()
-    WINDOW.mainloop()

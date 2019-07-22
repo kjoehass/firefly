@@ -72,7 +72,7 @@ class Pattern:
     def __init__(self):
         self.number = 0
         self.flash_pattern_interval = 0
-        self.flash_list = [None] * 16
+        self.flash_list = [None] * (16+1)
 
     def __copy__(self):
         result = Pattern()
@@ -100,9 +100,9 @@ class Pattern:
         # a fixed length
         fields = fields[2:]
         for i in range(len(fields)):
-            self.flash_list[i] = fields[i]
+            self.flash_list[i+1] = fields[i]
         for i in range(len(fields), 16):
-            self.flash_list[i] = None
+            self.flash_list[i+1] = None
 
     def display(self):
         msg = "Pattern {0}: FPI {1} Flashes:".format(
@@ -125,7 +125,7 @@ class Pattern:
 class RandPatternSet:
     def __init__(self):
         self.number = 0
-        self.pattern_set = [None] * config.max_pattern_set
+        self.pattern_set = [None] * (config.max_pattern_set+1)
 
     def __copy__(self):
         result = RandPatternSet()
@@ -150,9 +150,9 @@ class RandPatternSet:
         """
         fields = fields[1:]
         for i in range(len(fields)):
-            self.pattern_set[i] = fields[i]
+            self.pattern_set[i+1] = fields[i]
         for i in range(len(fields), 16):
-            self.pattern_set[i] = None
+            self.pattern_set[i+1] = None
 
     def display(self):
         msg = "Random Set {0}: Patterns:".format(self.number)
