@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import font as tkfont
+import tkinter.messagebox as tkmb
 
 import config
 import arduino_config as ac
@@ -33,12 +34,23 @@ class ButtonFrame(tk.Frame):
                                     parent.show_frame("PatternConfig"))
         cfg_patt_button.pack(side="left")
         """
+        Save or Discard and edits
+        """
+        self.save_button = tk.Button(self,
+                                     text="Keep Edits",
+                                     command=parent.keep_edits)
+        self.save_button.pack(side="left", anchor="e")
+        self.discard_button = tk.Button(self,
+                                     text="Discard Edits",
+                                     command=parent.discard_edits)
+        self.discard_button.pack(side="left", anchor="e")
+        """
         Hasta la vista, baby.
         """
-        quit_button = tk.Button(self,
+        self.quit_button = tk.Button(self,
                                 text="Quit",
                                 command=parent.destroy)
-        quit_button.pack(side="right", anchor="e")
+        self.quit_button.pack(side="right", anchor="e")
 
 class SimGui(tk.Tk):
 
@@ -49,8 +61,8 @@ class SimGui(tk.Tk):
                                       weight="bold", slant="italic")
         self.title = "Firefly Simulator Configuration"
 
-        buttons = ButtonFrame(parent=self)
-        buttons.pack(side="top", anchor="w", fill="y", expand="yes")
+        self.buttons = ButtonFrame(parent=self)
+        self.buttons.pack(side="top", anchor="w", fill="y", expand="yes")
 
         # the container is where we'll stack a bunch of frames
         # on top of each other, then the one we want visible
@@ -79,10 +91,37 @@ class SimGui(tk.Tk):
         self.show_frame("StartPage")
 
     def show_frame(self, page_name):
-        '''Show a frame for the given page name'''
-        frame = self.frames[page_name]
-        frame.tkraise()
-        frame.update_config()
+        """
+        Give user option to keep edits or cancel change in frame.
+        """
+        if (self.frames["LEDConfig"].modified != 0) or \
+           (self.frames["FlashConfig"].modified != 0) or \
+           (self.frames["PatternConfig"].modified != 0):
+            tkmb.showwarning('Edits made',
+                             'You must select Keep Edits or Discard Edits \
+                              before selecting a different function')
+            return
+
+        ''' 
+        Disable Quit button except on StartPage
+        '''
+        if page_name == 'StartPage':
+            self.buttons.quit_button.configure(state = tk.NORMAL)
+        else:
+            self.buttons.quit_button.configure(state = tk.DISABLED)
+
+        '''
+        Show a frame for the given page name
+        '''
+        self.current_frame = self.frames[page_name]
+        self.current_frame.tkraise()
+        self.current_frame.update_config()
+
+    def keep_edits(self):
+        self.current_frame.keep_edits()
+
+    def discard_edits(self):
+        self.current_frame.discard_edits()
 
 if __name__ == "__main__":
 

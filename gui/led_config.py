@@ -1,6 +1,7 @@
 import math
 import copy
 import tkinter as tk
+import tkinter.messagebox as tkmb
 import config
 import arduino_config as ac
 import firefly_data as fd
@@ -9,7 +10,9 @@ class LEDConfig(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+
         self.modified = 0              # flag, something was changed
+        self.in_edit_mode = False
 
         """
         Radiobuttons to select one of the LEDs
@@ -59,51 +62,78 @@ class LEDConfig(tk.Frame):
 
     """
     When entering this frame, use current configuration data
-    Default to display LED #1
     """
     def update_config(self):
-        self.sel_led.set(1)
+        pass
+        #if self.sel_led.get() == 0:
+        #    self.sel_led.set(1)
+        #    self.on_led_select()
+
+    """
+    Keep edits
+    """
+    def keep_edits(self):
+        config.LEDs[self.modified] = fd.LED(self.modified,
+                                            self.sel_chan.get(),
+                                            int(self.bright.get()))
+        tkmb.showinfo('Keep','Remember to save configuration later!')
+        config.changed = True
+        self.modified = 0
+
+    """
+    Discard edits
+    """
+    def discard_edits(self):
+        if self.modified == 0:
+            return
+        self.in_edit_mode = False
+        self.sel_led.set(self.modified)
         self.modified = 0
         self.on_led_select()
+        self.in_edit_mode = True
 
     """
     Handle selection of a particular LED
-    Range of value is 1 to 16
     """
     def on_led_select(self):
         """
-        Was an LED modified? Need to save it?
-        Note that self.modified ranges from 1 to 16
+        Don't select a different LED if unkept edits
         """
         if self.modified != 0:
-            config.LEDs[self.modified] = fd.LED(self.modified,
-                                                self.sel_chan.get(),
-                                                int(self.bright.get()))
-            print("--- Changing LED {0}".format(self.modified))
-
-        self.modified = 0
-
+            warning = 'LED {0} was edited.\n\n'.format(self.modified)
+            warning = warning + 'You must select Keep Edits or Discard Edits '
+            warning = warning + 'before selecting a different LED'
+            tkmb.showwarning('Edits made',warning)
+            self.sel_led.set(self.modified)
+            return
         """
         Update GUI for selected LED
+        sel_led holds the LED number, 1 to 16
         """
         thisled = copy.copy(config.LEDs[self.sel_led.get()])
 
+        self.in_edit_mode = False
         if thisled:
             self.sel_chan.set(thisled.channel)
             self.bright.set(thisled.maxbrightness)
         else:
             self.sel_chan.set(0)
             self.bright.set(0)
+        self.in_edit_mode = True
         
     """
     Handle selection of a particular channel
     """
     def on_chan_select(self):
-        self.modified = self.sel_led.get()
+        """ Remember that this LED was modified """
+        if self.in_edit_mode:
+            self.modified = self.sel_led.get()
 
     """
     Handle selection of a max brightness value
     """
     def on_bright_select(self, value):
-        self.modified = self.sel_led.get()
+        """ Remember that this LED was modified """
+        if self.in_edit_mode:
+            self.modified = self.sel_led.get()
 

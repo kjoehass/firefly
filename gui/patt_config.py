@@ -1,7 +1,10 @@
 import math
 import copy
 import tkinter as tk
+import tkinter.messagebox as tkmb
+
 import config
+import firefly_data as fd
 
 class PatternConfig(tk.Frame):
     def __init__(self, parent, controller):
@@ -16,6 +19,10 @@ class PatternConfig(tk.Frame):
         self.sel_fle = tk.IntVar()
         self.sel_flsh = tk.IntVar()
 
+        self.flsh_patt_int.set(0.0)
+
+        self.modified = 0
+        self.in_edit_mode = False
         """
         Radiobuttons to select the patterns
         """
@@ -67,10 +74,10 @@ class PatternConfig(tk.Frame):
         """Flash Pattern Interval control"""
         fpi_scale = tk.Scale(self,
                              label="Flash Pattern Interval (s)",
-                             to=10.0,
+                             to=20.0,
                              orient=tk.HORIZONTAL,
                              resolution=0.1,
-                             tickinterval=0.5,
+                             tickinterval=1.0,
                              variable=self.flsh_patt_int,
                              command=self.on_flsh_select,
                              length=800)
@@ -92,77 +99,92 @@ class PatternConfig(tk.Frame):
 #        tag_entry.grid(column=3, columnspan=12, row=17, sticky="ew")
 #        tag_update.grid(column=15, row=17)
 
-        """
-        The patt starts out with a non-zero duration just so the graph has
-        some shape
-        """
-        self.flsh_patt_int.set(1.0)
-
         """flash selection"""
-        """
-        Radiobuttons to select the flash list entry
-        """
-        fle_label = tk.Label(self, text="Select a flash list entry")
-        fle_label.grid(column=0, columnspan=4, row=nextrow)
+        spinbox_title = tk.Label(self,
+                                 justify=tk.LEFT,
+                                 text="Select up to 16 flashes for this pattern")
+        spinbox_title.grid(column=1, columnspan=8, row=nextrow, sticky="w")
         nextrow = nextrow + 1
 
-        for i in range(1, 17):
-            pick_fle = tk.Radiobutton(self,
-                                      text=str(i),
-                                      width=2,
-                                      variable=self.sel_fle,
-                                      value=i,
-                                      command=self.on_fle_select)
-            pick_fle.grid(column=i-1, row=nextrow, sticky="w")
-        nextrow = nextrow + 1
-        """
-        Radiobuttons to select one of the flashes
-        """
-        flsh_label = tk.Label(self,
-                              text="Select a flash to put in the flash list")
-        flsh_label.grid(column=0, columnspan=4, row=nextrow)
+        for i in range(1, len(self.flsh_list)):
+            flash_number = tk.Label(self,
+                                justify=tk.RIGHT,
+                                text=str(i),
+                                width=2)
+            flash_number.grid(column=i-1, row=nextrow, sticky="e")
         nextrow = nextrow + 1
 
-        for i in range(1, (config.max_flash+1)): 
-            self.flsh_button[i] = tk.Radiobutton(self,
-                                                 text=str(i),
-                                                 width=2,
-                                                 variable=self.sel_flsh,
-                                                 value=i,
-                                                 command=self.on_flsh_select)
-            self.flsh_button[i].grid(column=i-1, row=nextrow, sticky="w")
+        self.pick_flsh = [None] * len(self.flsh_list)
+        for i in range(1, len(self.flsh_list)):
+            self.pick_flsh[i] = tk.Spinbox(self,
+                                command=self.on_flsh_select,
+                                justify=tk.RIGHT,
+                                values=('--','1'),
+                                width=2,
+                                wrap=True)
+            self.pick_flsh[i].grid(column=i-1, row=nextrow, sticky="e")
+        nextrow = nextrow + 1
 
     def update_config(self):
-        for i in range(1, (config.max_flash+1)): 
+        self.in_edit_mode = False
+        available_flashes = ['--']
+        for i in range(1, len(config.flashes)): 
             if config.flashes[i]:
-                self.flsh_button[i].config(value=i,
-                                           state=tk.NORMAL)
-            else:
-                self.flsh_button[i].config(value=config.max_flash+1,
-                                           state=tk.DISABLED)
+                available_flashes.append(str(i))
+        for i in range(1, len(self.flsh_list)):
+            self.pick_flsh[i].config(values=available_flashes)
+        self.set_spinboxes()
+        self.in_edit_mode = True
 
     """
-    Update the graph whenever a different flash is selected
+    Handle the selection of a flash
     """
     def on_flsh_select(self):
         """
-        Redraw the graph of the pattern. The x-axis is also redrawn in case
-        the flash pattern interval changes.
+        Remember that this pattern was modified
         """
-        self.patt_img.delete("flash")
-        self.patt_img.delete("xaxis")
-
+        if self.in_edit_mode:
+            self.modified = self.sel_patt.get()
         """
         Update the flash list
         """
-        self.flsh_list[self.sel_fle.get()] = self.sel_flsh.get()
+        for i in range(1, len(self.flsh_list)):
+            if self.pick_flsh[i].get() == '--':
+                self.flsh_list[i] = None
+            else:
+                self.flsh_list[i] = int(self.pick_flsh[i].get())
+
+        self.update_graph()
+
+    """
+    Set spinboxes to the current flash list values
+    """
+    def set_spinboxes(self):
+        for i in range(1,len(self.flsh_list)):
+            if self.flsh_list[i]:
+                while str(self.pick_flsh[i].get()) != str(self.flsh_list[i]):
+                    self.pick_flsh[i].invoke('buttonup')
+            else:
+                while self.pick_flsh[i].get() != '--':
+                    self.pick_flsh[i].invoke('buttonup')
+
+    """
+    Redraw the graph of the pattern. The x-axis is also redrawn in case
+    the flash pattern interval changes.
+    """
+    def update_graph(self):
+        """
+        Delete old graph and xaxis
+        """
+        self.patt_img.delete("flash")
+        self.patt_img.delete("xaxis")
 
         """
         Make sure the minimum flash pattern interval is at least as long as
         the sum of the interpulse intervals
         """
         min_fpi = 0.0
-        for i in range(1, 17):
+        for i in range(1, len(self.flsh_list)):
             flshnum = self.flsh_list[i]
             if flshnum:
                 thisflsh = copy.copy(config.flashes[flshnum])
@@ -185,7 +207,7 @@ class PatternConfig(tk.Frame):
                                       tags="xaxis")
 
         start_x = self.graph_left
-        for i in range(1, 17):
+        for i in range(1, len(self.flsh_list)):
             flshnum = self.flsh_list[i]
             if flshnum:
                 thisflsh = copy.copy(config.flashes[flshnum])
@@ -216,33 +238,69 @@ class PatternConfig(tk.Frame):
                 start_x = start_x + ((int_pls_int / fpi) * self.graph_width)
 
     """
+    Keep edits
+    """
+    def keep_edits(self):
+        config.patterns[self.modified] = fd.Pattern()
+        config.patterns[self.modified].number = self.modified
+        config.patterns[self.modified].flash_pattern_interval = \
+                                  int(1000*self.flsh_patt_int.get())
+        for i in range(len(self.flsh_list)):
+            config.patterns[self.modified].flash_list[i] = \
+                                  self.flsh_list[i]
+        tkmb.showinfo('Keep','Remember to save configuration later!')
+        config.changed = True
+        self.modified = 0
+
+    """
+    Discard edits
+    """
+    def discard_edits(self):
+        if self.modified == 0:
+            return
+        self.in_edit_mode = False
+        self.sel_patt.set(self.modified)
+        self.modified = 0
+        self.on_patt_select()
+        self.in_edit_mode = True
+
+    """
     Handle selection of a particular patt
     Range of value is 1 to 16
     """
     def on_patt_select(self):
-        self.patt_tag.set(" ")
-        self.flsh_list = [None] * (16+1)
-        self.flsh_patt_int.set(0.0)
+        """
+        Don't select a different pattern if unkept edits
+        """
+        warning = 'Pattern {0} was edited.\n\n'.format(self.modified)
+        warning = warning + 'You must select Keep Edits or Discard Edits '
+        warning = warning + 'before selecting a different pattern'
+        if self.modified != 0:
+           tkmb.showwarning('Edits made',warning)
+           self.sel_patt.set(self.modified)
+           return
 
+        """
+        Update local data, if selected pattern is defined
+        """
+        self.in_edit_mode = False
         thispatt = copy.copy(config.patterns[self.sel_patt.get()])
         if thispatt:
             self.flsh_patt_int.set(thispatt.flash_pattern_interval/1000.0)
             for i in range(1, 17):
                 if thispatt.flash_list[i]:
                     self.flsh_list[i] = thispatt.flash_list[i]
-            self.sel_fle.set(1)
-            self.sel_flsh.set(self.flsh_list[1])
+                else:
+                    self.flsh_list[i] = None
+        else:
+            self.patt_tag.set(" ")
+            self.flsh_patt_int.set(0.0)
+            self.flsh_list = [None] * len(self.flsh_list)
 
-        self.on_flsh_select()
+        self.set_spinboxes()
+        self.update_graph()
+        self.in_edit_mode = True
 
-    """
-    Handle selection of a particular flash list entry
-    """
-    def on_fle_select(self):
-        """
-        Update the selected flash, if any
-        """
-        self.sel_flsh.set(self.flsh_list[self.sel_fle.get()])
 
 #    def update_tag(self): # FIXME
 #        key = "p,{0},{1},{2},{3}".format(int(self.up_dur.get()*1000),

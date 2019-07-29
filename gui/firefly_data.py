@@ -27,7 +27,6 @@ class LED:
                self.number, self.channel, self.maxbrightness))
 
 class Flash:
-
     def __init__(self, number=0, led=0, updur=0, ondur=0, dndur=0, ipi=0):
         self.number = number
         self.LED = led

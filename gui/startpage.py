@@ -46,6 +46,12 @@ Information messages appear here.
         config.log_area = self.log_area  #hack! get access from other code
 
     def on_fromsim(self):
+
+        if config.changed:
+            if not tkmb.askokcancel('Verify', 'Discard changes you made?'):
+                return
+        config.changed = False
+
         self.log_area.delete('1.0',tk.END)
 
         ARD = ac.Arduino()
@@ -100,9 +106,16 @@ Information messages appear here.
         ARD.get_capacity()
         ARD.configure()
 
+        config.changed = False
         self.log_area.insert(tk.END,"=== Download finished")
 
     def on_fromfile(self):
+
+        if config.changed:
+            if not tkmb.askokcancel('Verify', 'Discard changes you made?'):
+                return
+        config.changed = False
+
         self.log_area.delete('1.0',tk.END)
         filename = tkfd.askopenfilename(defaultextension='.csv',
                                         title="Load configuration file",
@@ -147,7 +160,14 @@ Information messages appear here.
                     outfile.write(thisitem.dump())
 
         outfile.close()
+        config.changed = False
         self.log_area.insert(tk.END, "\nDone")
 
     def update_config(self):
+        pass
+
+    def keep_edits(self):
+        pass
+
+    def discard_edits(self):
         pass

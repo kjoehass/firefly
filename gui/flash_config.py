@@ -1,8 +1,11 @@
 import math
 import copy
 import tkinter as tk
+import tkinter.messagebox as tkmb
+
 import config
 import arduino_config as ac
+import firefly_data as fd
 
 class FlashConfig(tk.Frame):
     def __init__(self, parent, controller):
@@ -20,13 +23,16 @@ class FlashConfig(tk.Frame):
 
         self.led_button = [None] * 16
         self.flash_tag = tk.StringVar()
+
+        self.modified = 0
+        self.in_edit_mode = False
         """
         Radiobuttons to select one of the flashes
         """
         flash_label = tk.Label(self, text="Flash")
         flash_label.grid(column=0, row=1)
         self.sel_flsh = tk.IntVar()
-        for i in range(1, (config.max_flash+1)):
+        for i in range(1, len(config.flashes)):
             pick_flash = tk.Radiobutton(self,
                                         text=str(i),
                                         width=2,
@@ -40,7 +46,7 @@ class FlashConfig(tk.Frame):
         led_label = tk.Label(self, text="LED")
         led_label.grid(column=1, row=1)
         self.sel_led = tk.IntVar()
-        for i in range(1, (config.max_led+1)):
+        for i in range(1, len(config.LEDs)):
             self.led_button[i-1] = tk.Radiobutton(self,
                                       text=str(i),
                                       width=2,
@@ -150,22 +156,37 @@ class FlashConfig(tk.Frame):
         """
         self.int_pls_int.set(1.0)
 
-
+    """
+    Update the frame when it is selected
+    Update the LED selection buttons and the graph, in case LEDs have been
+    added or modified
+    """
     def update_config(self):
-        for i in range(1, (config.max_led+1)): 
+        self.in_edit_mode = False
+        for i in range(1, len(config.LEDs)): 
             if config.LEDs[i]:
                 self.led_button[i-1].config(value=i,
                                             state=tk.NORMAL)
             else:
                 self.led_button[i-1].config(value=config.max_led+1,
                                             state=tk.DISABLED)
+        self.update_graph()
+        self.in_edit_mode = True
 
+    """
+    If some timing value was changed, remember that this flash changed
+    """
+    def on_move(self, value):
+        """ Remember that this flash was modified """
+        if self.in_edit_mode:
+            self.modified = self.sel_flsh.get()
+            self.update_graph()
 
     """
     Update the graph whenever one of the scale sliders is moved or a different
     flash is selected
     """
-    def on_move(self, value):
+    def update_graph(self):
         """
         Redraw the graph of the pulse. The x-axis is also redrawn in case
         the interpulse interval changes. The graph is a piecewise-linear
@@ -217,20 +238,60 @@ class FlashConfig(tk.Frame):
                                                           fill='#A2FF00')
 
     """
+    Keep edits
+    """
+    def keep_edits(self):
+        tkmb.showinfo('Keep','Remember to save configuration later!')
+        config.flashes[self.modified] = fd.Flash(self.modified,
+                                            self.sel_led.get(),
+                                            int(1000*self.up_dur.get()),
+                                            int(1000*self.on_dur.get()),
+                                            int(1000*self.dn_dur.get()),
+                                            int(1000*self.int_pls_int.get()))
+        config.changed = True
+        self.modified = 0
+
+    """
+    Discard edits
+    """
+    def discard_edits(self):
+        if self.modified == 0:
+            return
+        self.in_edit_mode = False
+        self.sel_flsh.set(self.modified)
+        self.modified = 0
+        self.on_flsh_select()
+        self.in_edit_mode = True 
+
+    """
     Handle selection of a particular flash
     Range of value is 1 to 16
     """
     def on_flsh_select(self):
+        """
+        Don't select a different flash if unkept edits
+        """
+        if self.modified != 0:
+            warning = 'Flash {0} was edited.\n\n'.format(self.modified)
+            warning = warning + 'You must select Keep Edits or Discard Edits '
+            warning = warning + 'before selecting a different flash'
+            tkmb.showwarning('Edits made',warning)
+            self.sel_flsh.set(self.modified)
+            return
+        """
+        Update local flash datastructure from configuration
+        """
         thisflsh = copy.copy(config.flashes[self.sel_flsh.get()])
 
         self.flash_tag.set(" ")
 
+        self.in_edit_mode = False
         if thisflsh:
+            self.sel_led.set(thisflsh.LED)
             self.up_dur.set(thisflsh.up_duration/1000.0)
             self.on_dur.set(thisflsh.on_duration/1000.0)
             self.dn_dur.set(thisflsh.down_duration/1000.0)
             self.int_pls_int.set(thisflsh.interpulse_interval/1000.0)
-            self.sel_led.set(thisflsh.LED)
             self.on_led_select()
             key = "f,{0},{1},{2},{3}".format(int(self.up_dur.get()*1000),
                                              int(self.on_dur.get()*1000),
@@ -239,14 +300,15 @@ class FlashConfig(tk.Frame):
             if key in config.tags:
                 self.flash_tag.set(config.tags[key])
         else:
+            self.sel_led.set(0)
             self.up_dur.set(0.0)
             self.on_dur.set(0.0)
             self.dn_dur.set(0.0)
             self.int_pls_int.set(0.0)
-            self.sel_led.set(0)
             self.flash_img.itemconfigure(self.led_info_id, text="LED Info")
 
-        self.on_move(self)
+        self.update_graph()
+        self.in_edit_mode = True
 
     """
     Handle selection of a particular LED
@@ -255,6 +317,10 @@ class FlashConfig(tk.Frame):
     Update info displayed on the canvas
     """
     def on_led_select(self):
+        """ Remember that this flash was modified """
+        if self.in_edit_mode:
+            self.modified = self.sel_flsh.get()
+
         thisled = copy.copy(config.LEDs[self.sel_led.get()])
 
         if thisled:

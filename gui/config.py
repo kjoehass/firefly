@@ -17,6 +17,12 @@ pattern_sets = [None] * (max_pattern_set+1)
 tags = shelve.open("tagfile",flag='c')
 tags.flag='w'
 
+"""
+Note whether the user changed the current configuration. Could be a change to
+an LED, a flash, a pattern, and/or a pattern set.
+"""
+changed = False
+
 def erase_config():
     LEDs = [None] * (max_led+1)
     flashes = [None] * (max_flash+1)
