@@ -2,11 +2,10 @@ import tkinter as tk
 from tkinter import font as tkfont
 import tkinter.messagebox as tkmb
 
-import config
-import arduino_config as ac
 import led_config as lcfg
 import flash_config as fcfg
 import patt_config as pcfg
+import pattset_config as psfg
 import startpage as strtpg
 
 class ButtonFrame(tk.Frame):
@@ -33,23 +32,26 @@ class ButtonFrame(tk.Frame):
                                     command=lambda: \
                                     parent.show_frame("PatternConfig"))
         cfg_patt_button.pack(side="left")
-        """
-        Save or Discard and edits
-        """
+        cfg_pattset_button = tk.Button(self,
+                                       text="Random Pattern Set Config",
+                                       command=lambda: \
+                                       parent.show_frame("PatternSetConfig"))
+        cfg_pattset_button.pack(side="left")
+
+        # Save or Discard and edits
         self.save_button = tk.Button(self,
                                      text="Keep Edits",
                                      command=parent.keep_edits)
         self.save_button.pack(side="left", anchor="e")
         self.discard_button = tk.Button(self,
-                                     text="Discard Edits",
-                                     command=parent.discard_edits)
+                                        text="Discard Edits",
+                                        command=parent.discard_edits)
         self.discard_button.pack(side="left", anchor="e")
-        """
-        Hasta la vista, baby.
-        """
+
+        # Hasta la vista, baby.
         self.quit_button = tk.Button(self,
-                                text="Quit",
-                                command=parent.destroy)
+                                     text="Quit",
+                                     command=parent.destroy)
         self.quit_button.pack(side="right", anchor="e")
 
 class SimGui(tk.Tk):
@@ -82,37 +84,39 @@ class SimGui(tk.Tk):
                                                       controller=self)
         self.frames["PatternConfig"] = pcfg.PatternConfig(parent=container,
                                                           controller=self)
+        self.frames["PatternSetConfig"] = psfg.PatternSetConfig(
+            parent=container, controller=self)
 
         self.frames["StartPage"].grid(row=0, column=0, sticky="nsew")
         self.frames["LEDConfig"].grid(row=0, column=0, sticky="nsew")
         self.frames["FlashConfig"].grid(row=0, column=0, sticky="nsew")
         self.frames["PatternConfig"].grid(row=0, column=0, sticky="nsew")
+        self.frames["PatternSetConfig"].grid(row=0, column=0, sticky="nsew")
 
         self.show_frame("StartPage")
 
     def show_frame(self, page_name):
-        """
-        Give user option to keep edits or cancel change in frame.
-        """
-        if (self.frames["LEDConfig"].modified != 0) or \
-           (self.frames["FlashConfig"].modified != 0) or \
-           (self.frames["PatternConfig"].modified != 0):
+        """Give user option to keep edits or cancel change in frame. """
+        if self.frames["LEDConfig"].modified or \
+           self.frames["FlashConfig"].modified or \
+           self.frames["PatternConfig"].modified or \
+           self.frames["PatternSetConfig"].modified:
             tkmb.showwarning('Edits made',
                              'You must select Keep Edits or Discard Edits \
                               before selecting a different function')
             return
 
-        ''' 
-        Disable Quit button except on StartPage
-        '''
+        # Disable Quit button except on StartPage
         if page_name == 'StartPage':
-            self.buttons.quit_button.configure(state = tk.NORMAL)
+            self.buttons.quit_button.configure(state=tk.NORMAL)
+            self.buttons.save_button.configure(state=tk.DISABLED)
+            self.buttons.discard_button.configure(state=tk.DISABLED)
         else:
-            self.buttons.quit_button.configure(state = tk.DISABLED)
+            self.buttons.quit_button.configure(state=tk.DISABLED)
+            self.buttons.save_button.configure(state=tk.NORMAL)
+            self.buttons.discard_button.configure(state=tk.NORMAL)
 
-        '''
-        Show a frame for the given page name
-        '''
+        # Show a frame for the given page name
         self.current_frame = self.frames[page_name]
         self.current_frame.tkraise()
         self.current_frame.update_config()

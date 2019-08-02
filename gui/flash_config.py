@@ -24,8 +24,8 @@ class FlashConfig(tk.Frame):
         self.led_button = [None] * 16
         self.flash_tag = tk.StringVar()
 
-        self.modified = 0
-        self.in_edit_mode = False
+        self.modified = False
+        self.temp_flash = fd.Flash()
         """
         Radiobuttons to select one of the flashes
         """
@@ -98,13 +98,13 @@ class FlashConfig(tk.Frame):
         """Tag text entry"""
         self.flash_tag.set(" ")
         tag_label = tk.Label(self,
-                             text="Flash tag:")
+                             text="Flash comment tag:")
         tag_entry = tk.Entry(self,
                              textvariable=self.flash_tag,
                              bg="white")
         tag_update = tk.Button(self,
-                               text="Update tag",
-                               command=self.update_tag)
+                               text="Change tag",
+                               command=self.change_tag)
         tag_label.grid(column=2, row=17, sticky="e")
         tag_entry.grid(column=3, columnspan=12, row=17, sticky="ew")
         tag_update.grid(column=15, row=17)
@@ -122,7 +122,7 @@ class FlashConfig(tk.Frame):
         """
         on_dur_scale = tk.Scale(self, label="Flash On Duration (s)",
                                 to=10.0, orient=tk.HORIZONTAL,
-                                resolution=0.1, tickinterval=1.0,
+                                resolution=0.01, tickinterval=1.0,
                                 variable=self.on_dur, command=self.on_move,
                                 length=400)
         on_dur_scale.grid(column=8, columnspan=8, row=19, rowspan=1,
@@ -145,7 +145,7 @@ class FlashConfig(tk.Frame):
         """
         int_pls_int_scale = tk.Scale(self, label="Interpulse Interval (s)",
                                      to=30.0, orient=tk.HORIZONTAL,
-                                     resolution=0.5, tickinterval=5.0,
+                                     resolution=0.01, tickinterval=5.0,
                                      variable=self.int_pls_int,
                                      command=self.on_move, length=400.0)
         int_pls_int_scale.grid(column=8, columnspan=8, row=20, rowspan=1,
@@ -162,7 +162,6 @@ class FlashConfig(tk.Frame):
     added or modified
     """
     def update_config(self):
-        self.in_edit_mode = False
         for i in range(1, len(config.LEDs)): 
             if config.LEDs[i]:
                 self.led_button[i-1].config(value=i,
@@ -171,16 +170,54 @@ class FlashConfig(tk.Frame):
                 self.led_button[i-1].config(value=config.max_led+1,
                                             state=tk.DISABLED)
         self.update_graph()
-        self.in_edit_mode = True
 
     """
-    If some timing value was changed, remember that this flash changed
+    If some timing value was changed, update the temporary flash
     """
     def on_move(self, value):
-        """ Remember that this flash was modified """
-        if self.in_edit_mode:
-            self.modified = self.sel_flsh.get()
-            self.update_graph()
+        self.temp_flash.up_duration = int(1000*self.up_dur.get())
+        self.temp_flash.on_duration = int(1000*self.on_dur.get())
+        self.temp_flash.down_duration = int(1000*self.dn_dur.get())
+        self.temp_flash.interpulse_interval = \
+                int(1000*self.int_pls_int.get())
+
+        """Is the temporary different from the previously configured?"""
+        if self.temp_flash == \
+                config.flashes[self.temp_flash.number]:
+            self.modified = False
+        else:
+            self.modified = True
+
+        self.update_graph()
+
+    """
+    Handle selection of a particular LED
+
+    Range of sel_led is 1 to 16
+    Update info displayed on the canvas
+    """
+    def on_led_select(self):
+
+        self.temp_flash.LED = self.sel_led.get()
+
+        """Is the temporary different from the previously configured?"""
+        if self.temp_flash == \
+                config.flashes[self.temp_flash.number]:
+            self.modified = False
+        else:
+            self.modified = True
+
+        """Update description of the LED """
+        thisled = copy.copy(config.LEDs[self.sel_led.get()])
+        if thisled:
+            self.flash_img.itemconfigure(self.led_info_id,
+                text="LED #{0}:\n  Channel: {1}\n  Max Brightness: {2}%" \
+                .format(thisled.number,
+                        thisled.channel,
+                        thisled.maxbrightness))
+        else:
+            self.flash_img.itemconfigure(self.led_info_id,
+                text="LED #{0}:\n  UNDEFINED".format(self.sel_led.get()))
 
     """
     Update the graph whenever one of the scale sliders is moved or a different
@@ -202,8 +239,8 @@ class FlashConfig(tk.Frame):
         """
         min_ipi = self.up_dur.get() + self.on_dur.get() \
                   + self.dn_dur.get()
-        # round to 0.5s
-        min_ipi = math.ceil(min_ipi*2.0)/2.0
+        # # round to 0.5s
+        # min_ipi = math.ceil(min_ipi*2.0)/2.0
         if self.int_pls_int.get() < min_ipi:
             self.int_pls_int.set(min_ipi)
 
@@ -236,32 +273,25 @@ class FlashConfig(tk.Frame):
                                                           self.graph_left,
                                                           self.graph_bot,
                                                           fill='#A2FF00')
+        """Update the tag text """
+        self.get_tag()
 
     """
     Keep edits
     """
     def keep_edits(self):
+        self.modified = False
         tkmb.showinfo('Keep','Remember to save configuration later!')
-        config.flashes[self.modified] = fd.Flash(self.modified,
-                                            self.sel_led.get(),
-                                            int(1000*self.up_dur.get()),
-                                            int(1000*self.on_dur.get()),
-                                            int(1000*self.dn_dur.get()),
-                                            int(1000*self.int_pls_int.get()))
+        config.flashes[self.temp_flash.number] = copy.copy(self.temp_flash)
         config.changed = True
-        self.modified = 0
 
     """
     Discard edits
     """
     def discard_edits(self):
-        if self.modified == 0:
-            return
-        self.in_edit_mode = False
-        self.sel_flsh.set(self.modified)
-        self.modified = 0
+        self.modified = False
+        self.sel_flsh.set(self.temp_flash.number)
         self.on_flsh_select()
-        self.in_edit_mode = True 
 
     """
     Handle selection of a particular flash
@@ -271,35 +301,27 @@ class FlashConfig(tk.Frame):
         """
         Don't select a different flash if unkept edits
         """
-        if self.modified != 0:
-            warning = 'Flash {0} was edited.\n\n'.format(self.modified)
+        if self.modified:
+            warning = 'Flash {0} was edited.\n\n' \
+                    .format(self.temp_flash.number)
             warning = warning + 'You must select Keep Edits or Discard Edits '
             warning = warning + 'before selecting a different flash'
             tkmb.showwarning('Edits made',warning)
-            self.sel_flsh.set(self.modified)
+            self.sel_flsh.set(self.temp_flash.number)
             return
         """
         Update local flash datastructure from configuration
         """
-        thisflsh = copy.copy(config.flashes[self.sel_flsh.get()])
-
-        self.flash_tag.set(" ")
-
-        self.in_edit_mode = False
-        if thisflsh:
-            self.sel_led.set(thisflsh.LED)
-            self.up_dur.set(thisflsh.up_duration/1000.0)
-            self.on_dur.set(thisflsh.on_duration/1000.0)
-            self.dn_dur.set(thisflsh.down_duration/1000.0)
-            self.int_pls_int.set(thisflsh.interpulse_interval/1000.0)
+        if config.flashes[self.sel_flsh.get()] is not None:
+            self.temp_flash = copy.copy(config.flashes[self.sel_flsh.get()])
+            self.sel_led.set(self.temp_flash.LED)
+            self.up_dur.set(self.temp_flash.up_duration/1000.0)
+            self.on_dur.set(self.temp_flash.on_duration/1000.0)
+            self.dn_dur.set(self.temp_flash.down_duration/1000.0)
+            self.int_pls_int.set(self.temp_flash.interpulse_interval/1000.0)
             self.on_led_select()
-            key = "f,{0},{1},{2},{3}".format(int(self.up_dur.get()*1000),
-                                             int(self.on_dur.get()*1000),
-                                             int(self.dn_dur.get()*1000),
-                                             int(self.int_pls_int.get()*1000))
-            if key in config.tags:
-                self.flash_tag.set(config.tags[key])
         else:
+            self.temp_flash.number = self.sel_flsh.get()
             self.sel_led.set(0)
             self.up_dur.set(0.0)
             self.on_dur.set(0.0)
@@ -308,33 +330,21 @@ class FlashConfig(tk.Frame):
             self.flash_img.itemconfigure(self.led_info_id, text="LED Info")
 
         self.update_graph()
-        self.in_edit_mode = True
 
-    """
-    Handle selection of a particular LED
-
-    Range of sel_led is 1 to 16
-    Update info displayed on the canvas
-    """
-    def on_led_select(self):
-        """ Remember that this flash was modified """
-        if self.in_edit_mode:
-            self.modified = self.sel_flsh.get()
-
-        thisled = copy.copy(config.LEDs[self.sel_led.get()])
-
-        if thisled:
-            self.flash_img.itemconfigure(self.led_info_id, \
-                text="LED #{0}:\n  Channel: {1}\n  Max Brightness: {2}%".format(
-                    thisled.number, thisled.channel, thisled.maxbrightness))
-        else:
-            self.flash_img.itemconfigure(self.led_info_id,
-                text="LED #{0}:\n  UNDEFINED".format(self.sel_led.get()))
-
-    def update_tag(self):
+    def change_tag(self):
         key = "f,{0},{1},{2},{3}".format(int(self.up_dur.get()*1000),
                                          int(self.on_dur.get()*1000),
                                          int(self.dn_dur.get()*1000),
                                          int(self.int_pls_int.get()*1000))
         config.tags[key] = self.flash_tag.get()
+
+    def get_tag(self):
+        self.flash_tag.set(" ")
+
+        key = "f,{0},{1},{2},{3}".format(int(self.up_dur.get()*1000),
+                                         int(self.on_dur.get()*1000),
+                                         int(self.dn_dur.get()*1000),
+                                         int(self.int_pls_int.get()*1000))
+        if key in config.tags:
+            self.flash_tag.set(config.tags[key])
 

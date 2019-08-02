@@ -9,6 +9,18 @@ class LED:
         self.channel = channel
         self.maxbrightness = maxbrightness
 
+    def __eq__(self, other):
+        if ((self is None) and (other is not None)) or \
+                ((self is not None) and (other is None)):
+            return False
+        if (self is None) and (other is None):
+            return True
+        if self.number != other.number or \
+                self.channel != other.channel or \
+                self.maxbrightness != other.maxbrightness:
+            return False
+        return True
+
     def from_response(self, resp_str):
         """Configure member data from response string"""
         fields = resp_str.split(',')
@@ -18,13 +30,13 @@ class LED:
 
     def display(self):
         """Return a human-readable string"""
-        return("LED {0}: channel={1} max brightness={2}\n".format( \
-               self.number, self.channel, self.maxbrightness))
+        return "LED {0}: channel={1} max brightness={2}\n".format( \
+               self.number, self.channel, self.maxbrightness)
 
     def dump(self):
         """Return a simulator-format configuration string"""
-        return("L,{0},{1},{2}\n".format( \
-               self.number, self.channel, self.maxbrightness))
+        return "L,{0},{1},{2}\n".format( \
+               self.number, self.channel, self.maxbrightness)
 
 class Flash:
     def __init__(self, number=0, led=0, updur=0, ondur=0, dndur=0, ipi=0):
@@ -44,6 +56,21 @@ class Flash:
         result.down_duration = self.down_duration
         result.interpulse_interval = self.interpulse_interval
         return result
+
+    def __eq__(self, other):
+        if ((self is None) and (other is not None)) or \
+                ((self is not None) and (other is None)):
+            return False
+        if (self is None) and (other is None):
+            return True
+        if self.number != other.number or \
+                self.LED != other.LED or \
+                self.up_duration != other.up_duration or \
+                self.on_duration != other.on_duration or \
+                self.down_duration != other.down_duration or \
+                self.interpulse_interval != other.interpulse_interval:
+            return False
+        return True
 
     def from_response(self, resp_str):
         """
@@ -81,6 +108,20 @@ class Pattern:
             result.flash_list[i] = self.flash_list[i]
         return result
 
+    def __eq__(self, other):
+        if ((self is None) and (other is not None)) or \
+                ((self is not None) and (other is None)):
+            return False
+        if (self is None) and (other is None):
+            return True
+        if self.number != other.number or \
+               self.flash_pattern_interval != other.flash_pattern_interval:
+            return False
+        for i in range(1, len(self.flash_list)):
+            if other.flash_list[i] != self.flash_list[i]:
+                return False
+        return True
+
     def from_response(self, resp_str):
         """
         Get all of the fields in the response string, discard the initial
@@ -107,7 +148,7 @@ class Pattern:
         msg = "Pattern {0}: FPI {1} Flashes:".format(
             self.number, self.flash_pattern_interval)
         for i in range(len(self.flash_list)):
-            if self.flash_list[i]:
+            if self.flash_list[i] is not None:
                 msg = msg + " {0}".format(self.flash_list[i])
         msg = msg + '\n'
         return msg
@@ -116,7 +157,7 @@ class Pattern:
         msg = "P,{0},{1}".format(
             self.number, self.flash_pattern_interval)
         for i in range(len(self.flash_list)):
-            if self.flash_list[i]:
+            if self.flash_list[i] is not None:
                 msg = msg + ",{0}".format(self.flash_list[i])
         msg = msg + '\n'
         return msg
@@ -133,6 +174,19 @@ class RandPatternSet:
             result.pattern_set[i] = self.pattern_set[i]
         return result
 
+    def __eq__(self, other):
+        if ((self is None) and (other is not None)) or \
+                ((self is not None) and (other is None)):
+            return False
+        if (self is None) and (other is None):
+            return True
+        if self.number != other.number:
+            return False
+        for i in range(1, len(self.pattern_set)):
+            if other.pattern_set[i] != self.pattern_set[i]:
+                return False
+        return True
+
     def from_response(self, resp_str):
         """
         Get all of the fields in the response string, discard the initial
@@ -143,10 +197,9 @@ class RandPatternSet:
         fields = [int(field) for field in fields]
 
         self.number = fields[0]
-        """
-        Rest of fields are the list of patterns in the pattern set.
-        May be from 1 to 16 such fields, but the pattern_set is a fixed length
-        """
+
+        # Rest of fields are the list of patterns in the pattern set.
+        # May be from 1 to 16 such fields, but pattern_set is fixed length
         fields = fields[1:]
         for i in range(len(fields)):
             self.pattern_set[i+1] = fields[i]
@@ -156,7 +209,7 @@ class RandPatternSet:
     def display(self):
         msg = "Random Set {0}: Patterns:".format(self.number)
         for i in range(len(self.pattern_set)):
-            if self.pattern_set[i]:
+            if self.pattern_set[i] is not None:
                 msg = msg + " {0}".format(self.pattern_set[i])
         msg = msg + '\n'
         return msg
@@ -164,7 +217,7 @@ class RandPatternSet:
     def dump(self):
         msg = "R,{0}".format(self.number)
         for i in range(len(self.pattern_set)):
-            if self.pattern_set[i]:
+            if self.pattern_set[i] is not None:
                 msg = msg + ",{0}".format(self.pattern_set[i])
         msg = msg + '\n'
         return msg

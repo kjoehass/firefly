@@ -1,8 +1,8 @@
-import math
-import copy
 import tkinter as tk
 import tkinter.filedialog as tkfd
 import tkinter.scrolledtext as tkst
+import tkinter.messagebox as tkmb
+
 import config
 import arduino_config as ac
 
@@ -21,24 +21,27 @@ class StartPage(tk.Frame):
                                    text="Get from simulator",
                                    command=self.on_fromsim)
         fromsim_button.grid(column=0, row=3)
-        tofile_button = tk.Button(self,
-                                  width=20,
-                                  text="Save to File",
-                                  command=self.on_tofile)
-        tofile_button.grid(column=0, row=4)
-        tosim_button = tk.Button(self,
-                                 width=20,
-                                 text="Save to simulator",
-                                 command=self.on_tosim)
-        tosim_button.grid(column=0, row=5)
+        self.tofile_button = tk.Button(self,
+                                       width=20,
+                                       text="Save to File",
+                                       command=self.on_tofile)
+        self.tofile_button.grid(column=0, row=4)
+        self.tosim_button = tk.Button(self,
+                                      width=20,
+                                      text="Save to simulator",
+                                      command=self.on_tosim)
+        self.tosim_button.grid(column=0, row=5)
 
-        self.log_area = tkst.ScrolledText(master = self,
-                                          wrap = tk.WORD,
-                                          #width  = 60,
-                                          height = 30,
-                                          background = "white")
+        """Remember original color of the buttons, see update function """
+        self.orig_color = self.tosim_button.cget("background")
+
+        """Area to show results of load/save commands """
+        self.log_area = tkst.ScrolledText(master=self,
+                                          wrap=tk.WORD,
+                                          height=30,
+                                          background="white")
         self.log_area.grid(column=1, columnspan=15, row=2, rowspan=18,
-                sticky="news")
+                           sticky="news")
         self.log_area.insert(tk.INSERT,
 """\
 Information messages appear here.
@@ -52,62 +55,62 @@ Information messages appear here.
                 return
         config.changed = False
 
-        self.log_area.delete('1.0',tk.END)
+        self.log_area.delete('1.0', tk.END)
 
         ARD = ac.Arduino()
-        if (ARD.portname):
-            self.log_area.insert(tk.END,"=== Found a simulator (")
-            self.log_area.insert(tk.END,ARD.board)
-            self.log_area.insert(tk.END,") on "+ARD.portname+'\n')
+        if ARD.portname is not None:
+            self.log_area.insert(tk.END, "=== Found a simulator (")
+            self.log_area.insert(tk.END, ARD.board)
+            self.log_area.insert(tk.END, ") on "+ARD.portname+'\n')
             self.log_area.update_idletasks()
         else:
-            self.log_area.insert(tk.END,"=== No simulator found!\n")
+            self.log_area.insert(tk.END, "=== No simulator found!\n")
             return
 
         ARD.get_capacity()
         ARD.get_leds()
         for this in config.LEDs:
-            if this:
-                self.log_area.insert(tk.END,this.display())
+            if this is not None:
+                self.log_area.insert(tk.END, this.display())
         self.log_area.update_idletasks()
 
         ARD.get_flashes()
         for this in config.flashes:
-            if this:
-                self.log_area.insert(tk.END,this.display())
+            if this is not None:
+                self.log_area.insert(tk.END, this.display())
         self.log_area.update_idletasks()
 
         ARD.get_patterns()
         for this in config.patterns:
-            if this:
-                self.log_area.insert(tk.END,this.display())
+            if this is not None:
+                self.log_area.insert(tk.END, this.display())
         self.log_area.update_idletasks()
 
         ARD.get_pattern_sets()
         for this in config.pattern_sets:
-            if this:
-                self.log_area.insert(tk.END,this.display())
-        self.log_area.insert(tk.END,"=== Upload finished")
+            if this is not None:
+                self.log_area.insert(tk.END, this.display())
+        self.log_area.insert(tk.END, "=== Upload finished")
 
 
     def on_tosim(self):
-        self.log_area.delete('1.0',tk.END)
+        self.log_area.delete('1.0', tk.END)
 
         ARD = ac.Arduino()
-        if (ARD.portname):
-            self.log_area.insert(tk.END,"=== Found a simulator (")
-            self.log_area.insert(tk.END,ARD.board)
-            self.log_area.insert(tk.END,") on "+ARD.portname+'\n')
+        if ARD.portname is not None:
+            self.log_area.insert(tk.END, "=== Found a simulator (")
+            self.log_area.insert(tk.END, ARD.board)
+            self.log_area.insert(tk.END, ") on "+ARD.portname+'\n')
             self.log_area.update_idletasks()
         else:
-            self.log_area.insert(tk.END,"=== No simulator found!\n")
+            self.log_area.insert(tk.END, "=== No simulator found!\n")
             return
 
         ARD.get_capacity()
         ARD.configure()
 
         config.changed = False
-        self.log_area.insert(tk.END,"=== Download finished")
+        self.log_area.insert(tk.END, "=== Download finished")
 
     def on_fromfile(self):
 
@@ -116,11 +119,11 @@ Information messages appear here.
                 return
         config.changed = False
 
-        self.log_area.delete('1.0',tk.END)
+        self.log_area.delete('1.0', tk.END)
         filename = tkfd.askopenfilename(defaultextension='.csv',
                                         title="Load configuration file",
-                                        filetypes = (("csv files","*.csv"),
-                                                     ("all files","*.*")))
+                                        filetypes=(("csv files", "*.csv"),
+                                                   ("all files", "*.*")))
 
         self.log_area.insert(tk.END, "Reading from " + filename + '\n')
         infile = open(filename, 'rt')  # read as text, not binary
@@ -143,11 +146,11 @@ Information messages appear here.
         self.log_area.insert(tk.END, "\nDone")
 
     def on_tofile(self):
-        self.log_area.delete('1.0',tk.END)
+        self.log_area.delete('1.0', tk.END)
         filename = tkfd.asksaveasfilename(defaultextension='.csv',
                                           title="Save configuration file",
-                                          filetypes = (("csv files","*.csv"),
-                                                       ("all files","*.*")))
+                                          filetypes=(("csv files", "*.csv"),
+                                                     ("all files", "*.*")))
         self.log_area.insert(tk.END, "Writing to " + filename)
         outfile = open(filename, 'w')
 
@@ -156,7 +159,7 @@ Information messages appear here.
 
         for thisarray in arrays:
             for thisitem in thisarray:
-                if thisitem:
+                if thisitem is not None:
                     outfile.write(thisitem.dump())
 
         outfile.close()
@@ -164,7 +167,17 @@ Information messages appear here.
         self.log_area.insert(tk.END, "\nDone")
 
     def update_config(self):
-        pass
+        if config.changed:
+            warning = 'Configuration changed\n\n'
+            warning = warning + 'You must save the configuration to a file '
+            warning = warning + 'or the simulator before you Quit or your '
+            warning = warning + 'changes will be lost.'
+            tkmb.showwarning('Edits made', warning)
+            self.tofile_button.configure(background='yellow')
+            self.tosim_button.configure(background='yellow')
+        else:
+            self.tofile_button.configure(background=self.orig_color)
+            self.tosim_button.configure(background=self.orig_color)
 
     def keep_edits(self):
         pass
