@@ -58,13 +58,8 @@ Information messages appear here.
         self.log_area.delete('1.0', tk.END)
 
         ARD = ac.Arduino()
-        if ARD.portname is not None:
-            self.log_area.insert(tk.END, "=== Found a simulator (")
-            self.log_area.insert(tk.END, ARD.board)
-            self.log_area.insert(tk.END, ") on "+ARD.portname+'\n')
-            self.log_area.update_idletasks()
-        else:
-            self.log_area.insert(tk.END, "=== No simulator found!\n")
+        if ARD.portname is None:
+            tkmb.showwarning('Fail', 'No simulator connected')
             return
 
         ARD.get_capacity()
@@ -92,18 +87,14 @@ Information messages appear here.
                 self.log_area.insert(tk.END, this.display())
         self.log_area.insert(tk.END, "=== Upload finished")
 
+        ARD.comport.close()
 
     def on_tosim(self):
         self.log_area.delete('1.0', tk.END)
 
         ARD = ac.Arduino()
-        if ARD.portname is not None:
-            self.log_area.insert(tk.END, "=== Found a simulator (")
-            self.log_area.insert(tk.END, ARD.board)
-            self.log_area.insert(tk.END, ") on "+ARD.portname+'\n')
-            self.log_area.update_idletasks()
-        else:
-            self.log_area.insert(tk.END, "=== No simulator found!\n")
+        if ARD.portname is None:
+            tkmb.showwarning('Fail', 'No simulator connected')
             return
 
         ARD.get_capacity()
@@ -111,6 +102,8 @@ Information messages appear here.
 
         config.changed = False
         self.log_area.insert(tk.END, "=== Download finished")
+
+        ARD.comport.close()
 
     def on_fromfile(self):
 
@@ -124,6 +117,10 @@ Information messages appear here.
                                         title="Load configuration file",
                                         filetypes=(("csv files", "*.csv"),
                                                    ("all files", "*.*")))
+
+        if not filename:
+            self.log_area.insert(tk.END, "Cancel load")
+            return
 
         self.log_area.insert(tk.END, "Reading from " + filename + '\n')
         infile = open(filename, 'rt')  # read as text, not binary
@@ -151,6 +148,10 @@ Information messages appear here.
                                           title="Save configuration file",
                                           filetypes=(("csv files", "*.csv"),
                                                      ("all files", "*.*")))
+        if not filename:
+            self.log_area.insert(tk.END, "Cancel save")
+            return
+
         self.log_area.insert(tk.END, "Writing to " + filename)
         outfile = open(filename, 'w')
 

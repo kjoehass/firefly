@@ -1,18 +1,17 @@
-import copy
-import serial
-import config
+import datetime
 import tkinter as tk
+import serial
 from serial.tools import list_ports
-import startpage as strtpg
+
+import config
 import firefly_data as fd
-import firefly_gui as fg
 
 class Arduino:
 
     def __init__(self):
-        """
-        Find the serial port name
-        """
+
+        self.portname = None
+        # Find the serial port name
         for port in list_ports.comports():
             if ((port.vid == 0x16D0) and (port.pid == 0x0613)):
                 self.board = "Ruggedino"
@@ -23,24 +22,34 @@ class Arduino:
             else:
                 self.portname = None
 
-            """ Open the port. """
-            if self.portname:
+            # Open the port.
+            if self.portname is not None:
+                config.log_area.insert(tk.END, "=== Found a simulator (")
+                config.log_area.insert(tk.END, self.board)
+                config.log_area.insert(tk.END, ") on "+self.portname+'\n')
+                config.log_area.update_idletasks()
+
                 self.comport = serial.Serial(port=self.portname,
                                              baudrate=fd.ARDUINO_BAUDRATE,
                                              bytesize=serial.EIGHTBITS,
                                              parity=serial.PARITY_NONE)
-                """ Wait for first response. """
+                # Wait a long time for first response.
                 self.comport.timeout = 5.0
                 response = self.comport.readline()
-                #print(str(response))
                 # should have 'Running'
                 if b'Running' in response:
-                    break
+                    self.comport.timeout = fd.ARDUINO_TIMEOUT
+                    self.set_simulator_clock()
+                else:
+                    config.log_area.insert(tk.END,
+                                           "=== Bad simulator response:\n")
+                    self.portname = None
 
-        self.comport.timeout = fd.ARDUINO_TIMEOUT
+            else:
+                config.log_area.insert(tk.END, "=== No simulator found!\n")
 
     def get_capacity(self):
-        """ Get the capacity information from the Arduino. """
+        """Get the capacity information from the Arduino. """
         self.comport.write(b'C\r\n')
         response = self.comport.readline()
 
@@ -48,7 +57,7 @@ class Arduino:
 
         config.log_area.insert(tk.END,
                                "=== Date/time: {0}   Temp: {1}C\n".format(
-                               fields[1].decode(), fields[2].decode()))
+                                   fields[1].decode(), fields[2].decode()))
 
         fields = fields[3:]
         fields = [int(field) for field in fields]
@@ -59,9 +68,7 @@ class Arduino:
 
 
     def get_leds(self):
-        """
-        Get all of the configured LEDs from the Arduino
-        """
+        """Get all of the configured LEDs from the Arduino """
         self.comport.write(b'DL\r\n')
         while True:
             response = self.comport.readline()
@@ -70,9 +77,7 @@ class Arduino:
             config.led_from_response(response.decode())
 
     def get_flashes(self):
-        """
-        Get all of the configured flashes from the Arduino
-        """
+        """Get all of the configured flashes from the Arduino """
         self.comport.write(b'DF\r\n')
         while True:
             response = self.comport.readline()
@@ -81,9 +86,7 @@ class Arduino:
             config.flash_from_response(response.decode())
 
     def get_patterns(self):
-        """
-        Get all of the configured patterns from the Arduino
-        """
+        """Get all of the configured patterns from the Arduino """
         self.comport.write(b'DP\r\n')
         while True:
             response = self.comport.readline()
@@ -92,9 +95,7 @@ class Arduino:
             config.pattern_from_response(response.decode())
 
     def get_pattern_sets(self):
-        """
-        Get all of the configured random pattern sets from the Arduino
-        """
+        """Get all of the configured random pattern sets from the Arduino """
         self.comport.write(b'DR\r\n')
         while True:
             response = self.comport.readline()
@@ -104,13 +105,12 @@ class Arduino:
 
     def configure(self):
         """Configure the simulator from the config.xxxxx arrays"""
-
         arrays = [config.LEDs, config.flashes, config.patterns,
                   config.pattern_sets]
 
         for thisarray in arrays:
             for thisitem in thisarray:
-                if thisitem:
+                if thisitem is not None:
                     self.comport.write(thisitem.dump().encode())
                     config.log_area.insert(tk.END, thisitem.dump())
                     while True:
@@ -124,3 +124,16 @@ class Arduino:
                             config.log_area.insert(tk.END, "No response!\n")
                             return
             config.log_area.update_idletasks()
+
+    def set_simulator_clock(self):
+        """Set the current time on the simulator real-time-clock. """
+
+        now = datetime.datetime.utcnow()
+        timestring = now.strftime('T,%y,%m,%d,%H,%M,%S\n')
+        self.comport.write(timestring.encode())
+
+        # Check for valid response here?
+        while True:
+            response = self.comport.readline()
+            if not response:
+                break

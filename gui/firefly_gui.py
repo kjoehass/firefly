@@ -6,6 +6,7 @@ import led_config as lcfg
 import flash_config as fcfg
 import patt_config as pcfg
 import pattset_config as psfg
+import execute as exe
 import startpage as strtpg
 
 class ButtonFrame(tk.Frame):
@@ -18,25 +19,30 @@ class ButtonFrame(tk.Frame):
                                  parent.show_frame("StartPage"))
         start_button.pack(side="left")
         cfg_led_button = tk.Button(self,
-                                   text="LED Config",
+                                   text="LEDs",
                                    command=lambda: \
                                    parent.show_frame("LEDConfig"))
         cfg_led_button.pack(side="left")
         cfg_flsh_button = tk.Button(self,
-                                    text="Flash Config",
+                                    text="Flashes",
                                     command=lambda: \
                                     parent.show_frame("FlashConfig"))
         cfg_flsh_button.pack(side="left")
         cfg_patt_button = tk.Button(self,
-                                    text="Pattern Config",
+                                    text="Patterns",
                                     command=lambda: \
                                     parent.show_frame("PatternConfig"))
         cfg_patt_button.pack(side="left")
         cfg_pattset_button = tk.Button(self,
-                                       text="Random Pattern Set Config",
+                                       text="Random Patterns",
                                        command=lambda: \
                                        parent.show_frame("PatternSetConfig"))
         cfg_pattset_button.pack(side="left")
+        execute_button = tk.Button(self,
+                                   text="Execute",
+                                   command=lambda: \
+                                   parent.show_frame("Execute"))
+        execute_button.pack(side="left")
 
         # Save or Discard and edits
         self.save_button = tk.Button(self,
@@ -86,12 +92,15 @@ class SimGui(tk.Tk):
                                                           controller=self)
         self.frames["PatternSetConfig"] = psfg.PatternSetConfig(
             parent=container, controller=self)
+        self.frames["Execute"] = exe.Execute(parent=container,
+                                             controller=self)
 
         self.frames["StartPage"].grid(row=0, column=0, sticky="nsew")
         self.frames["LEDConfig"].grid(row=0, column=0, sticky="nsew")
         self.frames["FlashConfig"].grid(row=0, column=0, sticky="nsew")
         self.frames["PatternConfig"].grid(row=0, column=0, sticky="nsew")
         self.frames["PatternSetConfig"].grid(row=0, column=0, sticky="nsew")
+        self.frames["Execute"].grid(row=0, column=0, sticky="nsew")
 
         self.show_frame("StartPage")
 
@@ -109,10 +118,14 @@ class SimGui(tk.Tk):
         # Disable Quit button except on StartPage
         if page_name == 'StartPage':
             self.buttons.quit_button.configure(state=tk.NORMAL)
+        else:
+            self.buttons.quit_button.configure(state=tk.DISABLED)
+
+        # Disable Save and Discard buttons on StartPage and Execute
+        if page_name == 'StartPage' or page_name == 'Execute':
             self.buttons.save_button.configure(state=tk.DISABLED)
             self.buttons.discard_button.configure(state=tk.DISABLED)
         else:
-            self.buttons.quit_button.configure(state=tk.DISABLED)
             self.buttons.save_button.configure(state=tk.NORMAL)
             self.buttons.discard_button.configure(state=tk.NORMAL)
 

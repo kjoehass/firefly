@@ -23,6 +23,12 @@ an LED, a flash, a pattern, and/or a pattern set.
 """
 changed = False
 
+"""
+The log_area identifier will point to the scrolled text widget that
+is created on the startpage frame
+"""
+log_area = None
+
 def erase_config():
     LEDs = [None] * (max_led+1)
     flashes = [None] * (max_flash+1)
@@ -48,4 +54,3 @@ def pattern_set_from_response(resp_str):
     my_pattern_set = fd.RandPatternSet()
     my_pattern_set.from_response(resp_str)
     pattern_sets[my_pattern_set.number] = copy.copy(my_pattern_set)
-
