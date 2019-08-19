@@ -39,7 +39,7 @@ int toks[20];
 */
 void display_LEDs() {
   int i;
-  Serial.println("Saved LEDs");
+  //Serial.println("Saved LEDs");
   for (i = 1; i <= ConfigMem::MaxLED; i++) {
     if (ld.isDefined(i)) {
       ld.Get(i);
@@ -78,6 +78,9 @@ void display_Patterns() {
   }
 }
 
+/*
+   Displays all of the Random Pattern Sets currently in the EEPROM
+*/
 void display_Random() {
   for (int i = 1; i <= ConfigMem::MaxPatternSet; i++) {
     if (rd.isDefined(i)) {
@@ -136,7 +139,7 @@ void config_Flash(char *dat) {
     fl.UpDuration = toks[3];
     fl.OnDuration = toks[4];
     fl.DownDuration = toks[5];
-    if((fl.UpDuration % 10 != 0) || (fl.DownDuration % 10 != 0)){
+    if ((fl.UpDuration % 10 != 0) || (fl.DownDuration % 10 != 0)) {
       Serial.println("Up and Down Duration must be multiples of ten.\nFlash not configured.");
       return;
     }
@@ -203,6 +206,29 @@ void config_Random(char *dat)
     }
   } else {
     Serial.println("Random Pattern Set Configuration Error");
+  }
+}
+
+/**
+  @fn     config_Time
+  @brief  Sets the real-time clock on the simulator
+
+          The input string should have at exactly 7 tokens: the letter T,
+          the year, the month, the date, the hour, the minute, and seconds.
+          The year is a 4-digit number; all other numeric fields are 2-digit
+          integers.
+
+  @param  dat pointer to input character string
+*/
+void config_Time(char *dat)
+{
+  Serial.print(dat);
+  int size = tokenize(dat);
+  if (size == 7) {
+    RealTimeClock::Set(toks[1], toks[2], toks[3], toks[4], toks[5], toks[6]);
+    Serial.println("Real-Time Clock Configured");
+  } else {
+    Serial.println("Time Configuration Error");
   }
 }
 

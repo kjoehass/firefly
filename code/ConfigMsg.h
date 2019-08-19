@@ -3,9 +3,7 @@
 
 #include "ConfigData.h"
 
-
 extern int toks[20];
-
 
 void display_LEDs();
 void display_Flashes();
@@ -16,6 +14,7 @@ void config_LED(char *dat);
 void config_Flash(char *dat);
 void config_Pattern(char *dat);
 void config_Random(char *dat);
+void config_Time(char *dat);
 int tokenize(char *dat);
 
 #endif
