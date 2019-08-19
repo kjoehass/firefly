@@ -1,25 +1,25 @@
 /**
- *  @file RealTimeClock.cpp
- *
- * @brief Provides date/time functions
- *
- * @author K. Joseph Hass
- * @date Created: 2019-03-07T15:47:07-0500
- * @date Last modified: 2019-08-19T15:46:38-0400
- *
- * @copyright Copyright (C) 2019 Kenneth Joseph Hass
- *
- * @copyright This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
- *
- * @copyright This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- */
+    @file RealTimeClock.cpp
+
+   @brief Provides date/time functions
+
+   @author K. Joseph Hass
+   @date Created: 2019-03-07T15:47:07-0500
+   @date Last modified: 2019-08-19T15:46:38-0400
+
+   @copyright Copyright (C) 2019 Kenneth Joseph Hass
+
+   @copyright This program is free software: you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or (at your
+   option) any later version.
+
+   @copyright This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+   Public License for more details.
+
+*/
 
 #include "RealTimeClock.h"
 #include "Arduino.h"
@@ -41,24 +41,24 @@ const uint8_t LEAPYR = (1 << 5);        //!< Indicate year is leap year in RTCMT
 const uint8_t STRTOSC = (1 << 7);       //!< Start oscillator, in RTCSEC
 
 /**
- * @fn     BCD2char
- * @brief  Convert the bottom 4 bits of a BCD value to an ASCII character
- *
- * @param  BCDval an 8-bit BCD integer
- * @return a single ASCII digit character
- */
+   @fn     BCD2char
+   @brief  Convert the bottom 4 bits of a BCD value to an ASCII character
+
+   @param  BCDval an 8-bit BCD integer
+   @return a single ASCII digit character
+*/
 static char BCD2char(uint8_t BCDval)
 {
   return ('0' + (BCDval & 0xF));
 }
 
 /**
- * @fn     bin2BCD
- * @brief  Convert an 8-bit integer to BCD
- *
- * @param  value an 8-bit unsigned integer, 0 to 99
- * @return an 8-bit BCD value
- */
+   @fn     bin2BCD
+   @brief  Convert an 8-bit integer to BCD
+
+   @param  value an 8-bit unsigned integer, 0 to 99
+   @return an 8-bit BCD value
+*/
 static uint8_t bin2BCD(uint8_t value)
 {
   return (value + 6 * (value / 10));
@@ -70,16 +70,16 @@ static uint8_t bin2BCD(uint8_t value)
 char RealTimeClock::timestring[21] = "2000-04-01T12:59:59Z";
 
 /**
- * @fn    RealTimeClock::Set
- * @brief Sets the current date and time
- *
- * @param year    current year, e.g. 2019
- * @param month   current month, 1 to 12
- * @param day     current day, 1 to 31
- * @param hour    current hour, 0 to 23
- * @param minutes current minute, 0 to 59
- * @param seconds current seconds, 0 to 59
- */
+   @fn    RealTimeClock::Set
+   @brief Sets the current date and time
+
+   @param year    current year, e.g. 2019
+   @param month   current month, 1 to 12
+   @param day     current day, 1 to 31
+   @param hour    current hour, 0 to 23
+   @param minutes current minute, 0 to 59
+   @param seconds current seconds, 0 to 59
+*/
 void RealTimeClock::Set(uint16_t year,  //!< 4-digit year
                         uint8_t month,  //!< 1=Jan, 12=Dec
                         uint8_t day,    //!< 1 to 31
@@ -122,11 +122,11 @@ void RealTimeClock::Set(uint16_t year,  //!< 4-digit year
 }
 
 /**
- * @fn    RealTimeClock::DateTime
- * @brief Returns a string with the current date and time in ISO 8601 format
- *
- * @return a date/time string
- */
+   @fn    RealTimeClock::DateTime
+   @brief Returns a string with the current date and time in ISO 8601 format
+
+   @return a date/time string
+*/
 char *RealTimeClock::DateTime(void)
 {
 #ifndef FAKE_RTC
