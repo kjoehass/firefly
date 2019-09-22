@@ -6,6 +6,7 @@ import tkinter.messagebox as tkmb
 import config
 import firefly_data as fd
 
+
 class PatternConfig(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -13,7 +14,7 @@ class PatternConfig(tk.Frame):
 
         self.patt_tag = tk.StringVar()
         self.flsh_patt_int = tk.DoubleVar()
-        self.flsh_button = [None] * (16+1)
+        self.flsh_button = [None] * (16 + 1)
         self.sel_patt = tk.IntVar()
         self.sel_fle = tk.IntVar()
 
@@ -25,14 +26,14 @@ class PatternConfig(tk.Frame):
         # Radiobuttons to select a pattern to be modified
         patt_label = tk.Label(self, text="Patterns")
         patt_label.grid(column=0, row=0)
-        for i in range(1, (config.max_pattern+1)):
+        for i in range(1, (config.max_pattern + 1)):
             pick_patt = tk.Radiobutton(self,
                                        text=str(i),
                                        width=2,
                                        variable=self.sel_patt,
                                        value=i,
                                        command=self.on_patt_select)
-            pick_patt.grid(column=0, row=i+1, sticky="w")
+            pick_patt.grid(column=0, row=i + 1, sticky="w")
 
         # The graphical representation of the pattern. The y-axis is from 0
         # to 100% illumination, the x-axis is from 0 to the end of the flash
@@ -43,8 +44,12 @@ class PatternConfig(tk.Frame):
                                   bg="white",
                                   width=self.canvas_width,
                                   height=self.canvas_height)
-        self.patt_img.grid(column=2, columnspan=14, row=1, rowspan=16,
-                           padx=5, pady=5)
+        self.patt_img.grid(column=2,
+                           columnspan=14,
+                           row=1,
+                           rowspan=16,
+                           padx=5,
+                           pady=5)
         nextrow = 18
         #self.update()
         #self.canvas_width = self.patt_img.winfo_width()
@@ -59,13 +64,17 @@ class PatternConfig(tk.Frame):
                                   self.graph_right, self.graph_bot)
         self.patt_img.create_line(self.graph_left, self.graph_bot,
                                   self.graph_left, self.graph_top)
-        self.patt_img.create_text(self.graph_left, self.graph_bot+10,
+        self.patt_img.create_text(self.graph_left,
+                                  self.graph_bot + 10,
                                   text='0')
-        self.patt_img.create_text(self.canvas_width/2, self.graph_bot+10,
+        self.patt_img.create_text(self.canvas_width / 2,
+                                  self.graph_bot + 10,
                                   text='seconds')
-        self.patt_img.create_text(self.graph_left-20, self.graph_bot,
+        self.patt_img.create_text(self.graph_left - 20,
+                                  self.graph_bot,
                                   text='0%')
-        self.patt_img.create_text(self.graph_left-20, self.graph_top,
+        self.patt_img.create_text(self.graph_left - 20,
+                                  self.graph_top,
                                   text='100%')
 
         # Flash Pattern Interval control
@@ -78,28 +87,33 @@ class PatternConfig(tk.Frame):
                              variable=self.flsh_patt_int,
                              command=self.on_fpi_change,
                              length=800)
-        fpi_scale.grid(column=0, columnspan=16, row=nextrow, rowspan=1,
-                       padx=10, pady=5)
+        fpi_scale.grid(column=0,
+                       columnspan=16,
+                       row=nextrow,
+                       rowspan=1,
+                       padx=10,
+                       pady=5)
         nextrow = nextrow + 1
 
-#        """Tag text entry"""
-#        self.patt_tag.set(" ")
-#        tag_label = tk.Label(self,
-#                             text="Pattern tag:")
-#        tag_entry = tk.Entry(self,
-#                             textvariable=self.patt_tag,
-#                             bg="white")
-#        tag_update = tk.Button(self,
-#                               text="Update tag",
-#                               command=self.update_tag)
-#        tag_label.grid(column=2, row=17, sticky="e")
-#        tag_entry.grid(column=3, columnspan=12, row=17, sticky="ew")
-#        tag_update.grid(column=15, row=17)
+        #        """Tag text entry"""
+        #        self.patt_tag.set(" ")
+        #        tag_label = tk.Label(self,
+        #                             text="Pattern tag:")
+        #        tag_entry = tk.Entry(self,
+        #                             textvariable=self.patt_tag,
+        #                             bg="white")
+        #        tag_update = tk.Button(self,
+        #                               text="Update tag",
+        #                               command=self.update_tag)
+        #        tag_label.grid(column=2, row=17, sticky="e")
+        #        tag_entry.grid(column=3, columnspan=12, row=17, sticky="ew")
+        #        tag_update.grid(column=15, row=17)
 
         # flash selection
-        spinbox_title = tk.Label(self,
-                                 justify=tk.LEFT,
-                                 text="Select up to 16 flashes for this pattern")
+        spinbox_title = tk.Label(
+            self,
+            justify=tk.LEFT,
+            text="Select up to 16 flashes for this pattern")
         spinbox_title.grid(column=1, columnspan=8, row=nextrow, sticky="w")
         nextrow = nextrow + 1
 
@@ -108,7 +122,7 @@ class PatternConfig(tk.Frame):
                                     justify=tk.RIGHT,
                                     text=str(i),
                                     width=2)
-            flash_number.grid(column=i-1, row=nextrow, sticky="e")
+            flash_number.grid(column=i - 1, row=nextrow, sticky="e")
         nextrow = nextrow + 1
 
         # Create a list of spinboxes, with dummy initial values
@@ -125,7 +139,7 @@ class PatternConfig(tk.Frame):
                                            width=2,
                                            wrap=True)
             self.sel_flshs.append(var)
-            self.pick_flsh[i].grid(column=i-1, row=nextrow, sticky="e")
+            self.pick_flsh[i].grid(column=i - 1, row=nextrow, sticky="e")
         nextrow = nextrow + 1
 
     def update_config(self):
@@ -183,12 +197,11 @@ class PatternConfig(tk.Frame):
             #    while self.pick_flsh[i].get() != '--':
             #        self.pick_flsh[i].invoke('buttonup')
 
-    """
-    Redraw the graph of the pattern. The x-axis is also redrawn in case
-    the flash pattern interval changes.
-    """
     def update_graph(self):
-
+        """
+        Redraw the graph of the pattern. The x-axis is also redrawn in case
+        the flash pattern interval changes.
+        """
         # Delete old graph and xaxis
         self.patt_img.delete("flash")
         self.patt_img.delete("xaxis")
@@ -200,23 +213,25 @@ class PatternConfig(tk.Frame):
             flshnum = self.temp_patt.flash_list[i]
             if flshnum is not None:
                 thisflsh = copy.copy(config.flashes[flshnum])
-                min_fpi = min_fpi + thisflsh.interpulse_interval/1000.0
+                min_fpi = min_fpi + thisflsh.interpulse_interval / 1000.0
 
-        min_fpi = math.ceil(min_fpi*2.0)/2.0   # round UP to 0.5s
+        min_fpi = math.ceil(min_fpi * 2.0) / 2.0  # round UP to 0.5s
         if self.flsh_patt_int.get() < min_fpi:
             self.flsh_patt_int.set(min_fpi)
 
         fpi = self.flsh_patt_int.get()
-        self.patt_img.create_text(self.graph_right-5,
-                                  self.graph_bot+10,
+        self.patt_img.create_text(self.graph_right - 5,
+                                  self.graph_bot + 10,
                                   text=self.flsh_patt_int.get(),
                                   tags="xaxis")
 
         # Draw small tics every 1 second
-        for i in range(1, math.floor(fpi)+1):
+        for i in range(1, math.floor(fpi) + 1):
             xpt = (i / fpi) * self.graph_width + self.graph_left
-            self.patt_img.create_line(xpt, self.graph_bot,
-                                      xpt, self.graph_bot+5,
+            self.patt_img.create_line(xpt,
+                                      self.graph_bot,
+                                      xpt,
+                                      self.graph_bot + 5,
                                       tags="xaxis")
 
         start_x = self.graph_left
@@ -224,24 +239,28 @@ class PatternConfig(tk.Frame):
             flshnum = self.temp_patt.flash_list[i]
             if flshnum is not None:
                 thisflsh = copy.copy(config.flashes[flshnum])
-                up_dur = thisflsh.up_duration/1000.0
-                on_dur = thisflsh.on_duration/1000.0
-                dn_dur = thisflsh.down_duration/1000.0
-                int_pls_int = thisflsh.interpulse_interval/1000.0
+                up_dur = thisflsh.up_duration / 1000.0
+                on_dur = thisflsh.on_duration / 1000.0
+                dn_dur = thisflsh.down_duration / 1000.0
+                int_pls_int = thisflsh.interpulse_interval / 1000.0
 
                 # Calculate points on PWL graph
-                graph_t1 = ((up_dur / fpi)
-                            * self.graph_width + start_x)
-                graph_t2 = (((up_dur + on_dur) / fpi)
-                            * self.graph_width + start_x)
-                graph_t3 = (((up_dur + on_dur + dn_dur) / fpi)
-                            * self.graph_width + start_x)
+                graph_t1 = ((up_dur / fpi) * self.graph_width + start_x)
+                graph_t2 = (((up_dur + on_dur) / fpi) * self.graph_width +
+                            start_x)
+                graph_t3 = ((
+                    (up_dur + on_dur + dn_dur) / fpi) * self.graph_width +
+                            start_x)
 
                 # Draw the graph for this flash
-                self.patt_img.create_polygon(start_x, self.graph_bot,
-                                             graph_t1, self.graph_top,
-                                             graph_t2, self.graph_top,
-                                             graph_t3, self.graph_bot,
+                self.patt_img.create_polygon(start_x,
+                                             self.graph_bot,
+                                             graph_t1,
+                                             self.graph_top,
+                                             graph_t2,
+                                             self.graph_top,
+                                             graph_t3,
+                                             self.graph_bot,
                                              fill='#A2FF00',
                                              tags="flash")
 
@@ -260,11 +279,11 @@ class PatternConfig(tk.Frame):
         self.sel_patt.set(self.temp_patt.number)
         self.on_patt_select()
 
-    """
-    Handle selection of a particular patt
-    Range of value is 1 to 16
-    """
     def on_patt_select(self):
+        """
+        Handle selection of a particular pattern
+        Range of pattern number is 1 to 16
+        """
 
         # Don't select a different pattern if unkept edits
         if self.modified:
@@ -287,7 +306,7 @@ class PatternConfig(tk.Frame):
             self.temp_patt = copy.copy(config.patterns[self.sel_patt.get()])
 
         # Update widgets then update graph
-        self.flsh_patt_int.set(self.temp_patt.flash_pattern_interval/1000.0)
+        self.flsh_patt_int.set(self.temp_patt.flash_pattern_interval / 1000.0)
         self.set_spinboxes()
         self.update_graph()
 

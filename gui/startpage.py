@@ -6,6 +6,7 @@ import tkinter.messagebox as tkmb
 import config
 import arduino_config as ac
 
+
 class StartPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -31,19 +32,19 @@ class StartPage(tk.Frame):
                                       text="Save to simulator",
                                       command=self.on_tosim)
         self.tosim_button.grid(column=0, row=5)
-
         """Remember original color of the buttons, see update function """
         self.orig_color = self.tosim_button.cget("background")
-
         """Area to show results of load/save commands """
         self.log_area = tkst.ScrolledText(master=self,
                                           wrap=tk.WORD,
                                           height=30,
                                           background="white")
-        self.log_area.grid(column=1, columnspan=15, row=2, rowspan=18,
+        self.log_area.grid(column=1,
+                           columnspan=15,
+                           row=2,
+                           rowspan=18,
                            sticky="news")
-        self.log_area.insert(tk.INSERT,
-"""\
+        self.log_area.insert(tk.INSERT, """\
 Information messages appear here.
 """)
         config.log_area = self.log_area  #hack! get access from other code
@@ -155,8 +156,9 @@ Information messages appear here.
         self.log_area.insert(tk.END, "Writing to " + filename)
         outfile = open(filename, 'w')
 
-        arrays = [config.LEDs, config.flashes, config.patterns,
-                  config.pattern_sets]
+        arrays = [
+            config.LEDs, config.flashes, config.patterns, config.pattern_sets
+        ]
 
         for thisarray in arrays:
             for thisitem in thisarray:

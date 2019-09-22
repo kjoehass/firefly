@@ -9,6 +9,7 @@ import pattset_config as psfg
 import execute as exe
 import startpage as strtpg
 
+
 class ButtonFrame(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
@@ -55,18 +56,18 @@ class ButtonFrame(tk.Frame):
         self.discard_button.pack(side="left", anchor="e")
 
         # Hasta la vista, baby.
-        self.quit_button = tk.Button(self,
-                                     text="Quit",
-                                     command=parent.destroy)
+        self.quit_button = tk.Button(self, text="Quit", command=parent.destroy)
         self.quit_button.pack(side="right", anchor="e")
 
-class SimGui(tk.Tk):
 
+class SimGui(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
-        self.title_font = tkfont.Font(family='Helvetica', size=18,
-                                      weight="bold", slant="italic")
+        self.title_font = tkfont.Font(family='Helvetica',
+                                      size=18,
+                                      weight="bold",
+                                      slant="italic")
         self.title = "Firefly Simulator Configuration"
 
         self.buttons = ButtonFrame(parent=self)
@@ -92,8 +93,7 @@ class SimGui(tk.Tk):
                                                           controller=self)
         self.frames["PatternSetConfig"] = psfg.PatternSetConfig(
             parent=container, controller=self)
-        self.frames["Execute"] = exe.Execute(parent=container,
-                                             controller=self)
+        self.frames["Execute"] = exe.Execute(parent=container, controller=self)
 
         self.frames["StartPage"].grid(row=0, column=0, sticky="nsew")
         self.frames["LEDConfig"].grid(row=0, column=0, sticky="nsew")
@@ -110,8 +110,8 @@ class SimGui(tk.Tk):
            self.frames["FlashConfig"].modified or \
            self.frames["PatternConfig"].modified or \
            self.frames["PatternSetConfig"].modified:
-            tkmb.showwarning('Edits made',
-                             'You must select Keep Edits or Discard Edits \
+            tkmb.showwarning(
+                'Edits made', 'You must select Keep Edits or Discard Edits \
                               before selecting a different function')
             return
 
@@ -139,6 +139,7 @@ class SimGui(tk.Tk):
 
     def discard_edits(self):
         self.current_frame.discard_edits()
+
 
 if __name__ == "__main__":
 

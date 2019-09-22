@@ -1,7 +1,8 @@
 import config
 
 ARDUINO_BAUDRATE = 9600
-ARDUINO_TIMEOUT = 2.0     # float, seconds
+ARDUINO_TIMEOUT = 2.0  # float, seconds
+
 
 class LED:
     def __init__(self, number=0, channel=0, maxbrightness=0):
@@ -11,13 +12,13 @@ class LED:
 
     def __eq__(self, other):
         if ((self is None) and (other is not None)) or \
-                ((self is not None) and (other is None)):
+           ((self is not None) and (other is None)):
             return False
         if (self is None) and (other is None):
             return True
         if self.number != other.number or \
-                self.channel != other.channel or \
-                self.maxbrightness != other.maxbrightness:
+           self.channel != other.channel or \
+           self.maxbrightness != other.maxbrightness:
             return False
         return True
 
@@ -30,13 +31,14 @@ class LED:
 
     def display(self):
         """Return a human-readable string"""
-        return "LED {0}: channel={1} max brightness={2}\n".format( \
-               self.number, self.channel, self.maxbrightness)
+        return "LED {0}: channel={1} max brightness={2}\n".format(
+            self.number, self.channel, self.maxbrightness)
 
     def dump(self):
         """Return a simulator-format configuration string"""
-        return "L,{0},{1},{2}\n".format( \
-               self.number, self.channel, self.maxbrightness)
+        return "L,{0},{1},{2}\n".format(self.number, self.channel,
+                                        self.maxbrightness)
+
 
 class Flash:
     def __init__(self, number=0, led=0, updur=0, ondur=0, dndur=0, ipi=0):
@@ -59,16 +61,16 @@ class Flash:
 
     def __eq__(self, other):
         if ((self is None) and (other is not None)) or \
-                ((self is not None) and (other is None)):
+           ((self is not None) and (other is None)):
             return False
         if (self is None) and (other is None):
             return True
         if self.number != other.number or \
-                self.LED != other.LED or \
-                self.up_duration != other.up_duration or \
-                self.on_duration != other.on_duration or \
-                self.down_duration != other.down_duration or \
-                self.interpulse_interval != other.interpulse_interval:
+           self.LED != other.LED or \
+           self.up_duration != other.up_duration or \
+           self.on_duration != other.on_duration or \
+           self.down_duration != other.down_duration or \
+           self.interpulse_interval != other.interpulse_interval:
             return False
         return True
 
@@ -84,21 +86,23 @@ class Flash:
                 self.down_duration, self.interpulse_interval = fields
 
     def display(self):
-        return("Flash {0}: LED={1} Up={2} On={3} Down={4} IPI={5}\n".format(
+        return ("Flash {0}: LED={1} Up={2} On={3} Down={4} IPI={5}\n".format(
             self.number, self.LED, self.up_duration, self.on_duration,
             self.down_duration, self.interpulse_interval))
 
     def dump(self):
-        return("F,{0},{1},{2},{3},{4},{5}\n".format(
-            self.number, self.LED, self.up_duration, self.on_duration,
-            self.down_duration, self.interpulse_interval))
+        return ("F,{0},{1},{2},{3},{4},{5}\n".format(self.number, self.LED,
+                                                     self.up_duration,
+                                                     self.on_duration,
+                                                     self.down_duration,
+                                                     self.interpulse_interval))
 
 
 class Pattern:
     def __init__(self):
         self.number = 0
         self.flash_pattern_interval = 0
-        self.flash_list = [None] * (16+1)
+        self.flash_list = [None] * (16 + 1)
 
     def __copy__(self):
         result = Pattern()
@@ -110,12 +114,12 @@ class Pattern:
 
     def __eq__(self, other):
         if ((self is None) and (other is not None)) or \
-                ((self is not None) and (other is None)):
+           ((self is not None) and (other is None)):
             return False
         if (self is None) and (other is None):
             return True
         if self.number != other.number or \
-               self.flash_pattern_interval != other.flash_pattern_interval:
+           self.flash_pattern_interval != other.flash_pattern_interval:
             return False
         for i in range(1, len(self.flash_list)):
             if other.flash_list[i] != self.flash_list[i]:
@@ -140,9 +144,9 @@ class Pattern:
         # a fixed length
         fields = fields[2:]
         for i in range(len(fields)):
-            self.flash_list[i+1] = fields[i]
+            self.flash_list[i + 1] = fields[i]
         for i in range(len(fields), 16):
-            self.flash_list[i+1] = None
+            self.flash_list[i + 1] = None
 
     def display(self):
         msg = "Pattern {0}: FPI {1} Flashes:".format(
@@ -154,18 +158,18 @@ class Pattern:
         return msg
 
     def dump(self):
-        msg = "P,{0},{1}".format(
-            self.number, self.flash_pattern_interval)
+        msg = "P,{0},{1}".format(self.number, self.flash_pattern_interval)
         for i in range(len(self.flash_list)):
             if self.flash_list[i] is not None:
                 msg = msg + ",{0}".format(self.flash_list[i])
         msg = msg + '\n'
         return msg
 
+
 class RandPatternSet:
     def __init__(self):
         self.number = 0
-        self.pattern_set = [None] * (config.max_pattern_set+1)
+        self.pattern_set = [None] * (config.max_pattern_set + 1)
 
     def __copy__(self):
         result = RandPatternSet()
@@ -176,7 +180,7 @@ class RandPatternSet:
 
     def __eq__(self, other):
         if ((self is None) and (other is not None)) or \
-                ((self is not None) and (other is None)):
+           ((self is not None) and (other is None)):
             return False
         if (self is None) and (other is None):
             return True
@@ -202,9 +206,9 @@ class RandPatternSet:
         # May be from 1 to 16 such fields, but pattern_set is fixed length
         fields = fields[1:]
         for i in range(len(fields)):
-            self.pattern_set[i+1] = fields[i]
+            self.pattern_set[i + 1] = fields[i]
         for i in range(len(fields), 16):
-            self.pattern_set[i+1] = None
+            self.pattern_set[i + 1] = None
 
     def display(self):
         msg = "Random Set {0}: Patterns:".format(self.number)

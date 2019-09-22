@@ -6,8 +6,8 @@ from serial.tools import list_ports
 import config
 import firefly_data as fd
 
-class Arduino:
 
+class Arduino:
     def __init__(self):
 
         self.portname = None
@@ -26,7 +26,7 @@ class Arduino:
             if self.portname is not None:
                 config.log_area.insert(tk.END, "=== Found a simulator (")
                 config.log_area.insert(tk.END, self.board)
-                config.log_area.insert(tk.END, ") on "+self.portname+'\n')
+                config.log_area.insert(tk.END, ") on " + self.portname + '\n')
                 config.log_area.update_idletasks()
 
                 self.comport = serial.Serial(port=self.portname,
@@ -55,9 +55,10 @@ class Arduino:
 
         fields = response.split(b',')
 
-        config.log_area.insert(tk.END,
-                               "=== Date/time: {0}   Temp: {1}C\n".format(
-                                   fields[1].decode(), fields[2].decode()))
+        config.log_area.insert(
+            tk.END,
+            "=== Date/time: {0}   Temp: {1}C\n".format(fields[1].decode(),
+                                                       fields[2].decode()))
 
         fields = fields[3:]
         fields = [int(field) for field in fields]
@@ -65,7 +66,6 @@ class Arduino:
             config.max_event, config.max_pattern, config.max_pattern_set \
             = fields
         config.erase_config()
-
 
     def get_leds(self):
         """Get all of the configured LEDs from the Arduino """
@@ -105,8 +105,9 @@ class Arduino:
 
     def configure(self):
         """Configure the simulator from the config.xxxxx arrays"""
-        arrays = [config.LEDs, config.flashes, config.patterns,
-                  config.pattern_sets]
+        arrays = [
+            config.LEDs, config.flashes, config.patterns, config.pattern_sets
+        ]
 
         for thisarray in arrays:
             for thisitem in thisarray:

@@ -6,6 +6,7 @@ import tkinter.messagebox as tkmb
 import config
 import firefly_data as fd
 
+
 class PatternSetConfig(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -18,14 +19,14 @@ class PatternSetConfig(tk.Frame):
         ps_label = tk.Label(self, text="Pattern Set")
         ps_label.grid(column=0, row=1)
         self.sel_pattset = tk.IntVar()
-        for i in range(1, (config.max_pattern_set+1)):
+        for i in range(1, (config.max_pattern_set + 1)):
             pick_pattset = tk.Radiobutton(self,
                                           text=str(i),
                                           width=2,
                                           variable=self.sel_pattset,
                                           value=i,
                                           command=self.on_patt_set_select)
-            pick_pattset.grid(column=0, row=i+1, sticky="w")
+            pick_pattset.grid(column=0, row=i + 1, sticky="w")
 
         # Checkbuttons to select one or more patterns
         patt_label = tk.Label(self, text="Patterns")
@@ -41,7 +42,7 @@ class PatternSetConfig(tk.Frame):
                                                variable=var,
                                                command=self.on_patt_select)
             self.sel_patts.append(var)
-            self.pick_patt[i].grid(column=3, row=i+1, sticky="w")
+            self.pick_patt[i].grid(column=3, row=i + 1, sticky="w")
 
     def update_config(self):
         """When entering this frame, use current configuration data """

@@ -4,6 +4,7 @@ import tkinter.messagebox as tkmb
 import config
 import arduino_config as ac
 
+
 class Execute(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -22,7 +23,7 @@ class Execute(tk.Frame):
                                            variable=self.sel_thing,
                                            value=i,
                                            command=self.update_config)
-            pick_thing[i].grid(column=0, columnspan=2, row=i+1, sticky="w")
+            pick_thing[i].grid(column=0, columnspan=2, row=i + 1, sticky="w")
         self.sel_thing.set(0)
 
         # Radiobuttons to select which one to be executed
@@ -50,17 +51,16 @@ class Execute(tk.Frame):
         self.abort_button.grid(column=6, row=7)
 
     def update_config(self):
-        thing_lists = [config.LEDs,
-                       config.flashes,
-                       config.patterns,
-                       config.pattern_sets]
+        thing_lists = [
+            config.LEDs, config.flashes, config.patterns, config.pattern_sets
+        ]
         thing_list = thing_lists[self.sel_thing.get()]
 
         for i in range(1, len(self.pick_which)):
             if thing_list[i] is None:
-              self.pick_which[i].config(state=tk.DISABLED)
+                self.pick_which[i].config(state=tk.DISABLED)
             else:
-              self.pick_which[i].config(state=tk.NORMAL)
+                self.pick_which[i].config(state=tk.NORMAL)
 
         self.which.set(0)
 
@@ -101,4 +101,3 @@ class Execute(tk.Frame):
     def discard_edits(self):
         """Discard edits """
         pass
-

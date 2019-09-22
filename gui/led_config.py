@@ -6,6 +6,7 @@ import tkinter.messagebox as tkmb
 import config
 import firefly_data as fd
 
+
 class LEDConfig(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -18,27 +19,27 @@ class LEDConfig(tk.Frame):
         led_label = tk.Label(self, text="LED")
         led_label.grid(column=0, row=1)
         self.sel_led = tk.IntVar()
-        for i in range(1, (config.max_led+1)):
+        for i in range(1, (config.max_led + 1)):
             pick_led = tk.Radiobutton(self,
                                       text=str(i),
                                       width=2,
                                       variable=self.sel_led,
                                       value=i,
                                       command=self.on_led_select)
-            pick_led.grid(column=0, row=i+1, sticky="w")
+            pick_led.grid(column=0, row=i + 1, sticky="w")
 
         # Radiobuttons to select one of the channels
         chan_label = tk.Label(self, text="Channel")
         chan_label.grid(column=1, row=1)
         self.sel_chan = tk.IntVar()
-        for i in range(1, (config.max_channel+1)):
+        for i in range(1, (config.max_channel + 1)):
             pick_chan = tk.Radiobutton(self,
                                        text=str(i),
                                        width=2,
                                        variable=self.sel_chan,
                                        value=i,
                                        command=self.on_chan_select)
-            pick_chan.grid(column=1, row=i+1, sticky="w")
+            pick_chan.grid(column=1, row=i + 1, sticky="w")
 
         # Maximum brightness slider
         self.bright = tk.DoubleVar()
@@ -51,8 +52,12 @@ class LEDConfig(tk.Frame):
                                 variable=self.bright,
                                 command=self.on_bright_select,
                                 length=400)
-        bright_scale.grid(column=2, columnspan=12, row=2, rowspan=4,
-                          padx=10, pady=5)
+        bright_scale.grid(column=2,
+                          columnspan=12,
+                          row=2,
+                          rowspan=4,
+                          padx=10,
+                          pady=5)
 
     def update_config(self):
         """When entering this frame, use current configuration data """
