@@ -1,3 +1,24 @@
+/**
+  @file ConfigMsg.cpp
+
+  @brief  Processes configuration and display messages from the host
+
+  @author Matt Turconi, K. Joseph Hass
+  @date Created: 2019-09-04T12:24:37-0400
+  @date Last modified: 2019-09-04T13:02:22-0400
+
+  @copyright Copyright (C) 2019 Matt Turconi, Kenneth Joseph Hass
+
+  @copyright This program is free software: you can redistribute it and/or
+  modify it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or (at your
+  option) any later version.
+
+  @copyright This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  Public License for more details.
+*/
 #include "Arduino.h"
 #include "Firefly.h"
 #include "ConfigData.h"
@@ -5,81 +26,69 @@
 #include "RealTimeClock.h"
 #include "TempSensor.h"
 
+/**
+  @var   toks
+  @brief Array of tokens extracted from a message from the host PC
+*/
 int toks[20];
 
-//enum Channel{  // KJH
-//  channel1 = 3,
-//  channel2 = 5,
-//  channel3,
-//  channel4 = 9,
-//  channel5,
-//  channel6,
-//};
+/**
+  @fn    display_LEDs
+  @brief Sends LED info back to the host PC
 
-/*
-   Param:
-   Receives an integer num which corresponds to the selected channel
-
-   Return:
-   Retuns an integer that refers to the phsical channel
-*/
-//int getChannel(int num){    // KJH
-//  if(num == 1){return channel1;}
-//  else if(num == 2){return channel2;}
-//  else if(num == 3){return channel3;}
-//  else if(num == 4){return channel4;}
-//  else if(num == 5){return channel5;}
-//  else{return channel6;}
-//}
-
-
-/*
-   Displays all the saved LEDs in the current EPROM
-   Outputs an orginized list to the Arduino Serial terminal
+         A separate line for each properly configured LED is sent over the
+         serial communications interface.
 */
 void display_LEDs() {
   int i;
-  //Serial.println("Saved LEDs");
   for (i = 1; i <= ConfigMem::MaxLED; i++) {
     if (ld.isDefined(i)) {
       ld.Get(i);
-      ld.Display();   // KJH
+      ld.Display();
     }
   }
 }
 
-/*
-   Displays all the saved Flashes in the current EPROM
-   Outputs an orginized list to the Arduino Serial terminal
+/**
+  @fn    display_Flashes
+  @brief Sends Flash info back to the host PC
+
+         A separate line for each properly configured Flash is sent over the
+         serial communications interface.
 */
 void display_Flashes() {
   int i;
-  //Serial.println("Saved Flashes");
   for (i = 1; i <= ConfigMem::MaxFlash; i++) {
     if (fl.isDefined(i)) {
       fl.Get(i);
-      fl.Display();   // KJH
+      fl.Display();
     }
   }
 }
 
-/*
-   Displays all the saved Patterns in the current EPROM
-   Outputs an orginized list to the Arduino Serial terminal
+/**
+  @fn    display_Patterns
+  @brief Sends Pattern info back to the host PC
+
+         A separate line for each properly configured Pattern is sent over
+         the serial communications interface.
 */
 void display_Patterns() {
   int i;
-  //Serial.println("Saved Patterns");
   for (i = 1; i <= ConfigMem::MaxPattern; i++) {
     if (pt.isDefined(i)) {
       pt.Get(i);
-      pt.Display();   // KJH
+      pt.Display();
     }
   }
 }
 
-/*
-   Displays all of the Random Pattern Sets currently in the EEPROM
+/**
+  @fn    display_Random
+  @brief Sends Random Pattern Set info back to the host PC
+
+         A separate line for each properly configured Random Pattern Set is
+         sent over the serial communications interface.
 */
 void display_Random() {
   for (int i = 1; i <= ConfigMem::MaxPatternSet; i++) {
@@ -90,50 +99,50 @@ void display_Random() {
   }
 }
 
-/*
-   Helper function for the display_Patterns function.
-   It's main function is to convert the flash list into
-   a nicely formatted string.
-*/
-void disp_pattern() {
-  String Msg = "p,";
-  Msg += String(RealTimeClock::DateTime());
-  Msg += ",";
-  Msg += String(TempSensor::Temperature());
-  Msg += ",";
-  Msg += String(pt.Number, DEC);
-  Serial.println(Msg);
-}
+/**
+  @fn    config_LED
+  @brief Parses message from host and configures an LED
 
-/*
-   Param:
-   dat - configuration message conatining an identifier number,
-   a channel number, and the max brightness
+         The input string should have exactly 4 tokens: the letter L,
+         the LED number, the PWM channel, and the maximum brightness.
+
+  @param dat string containing message from host
 */
 void config_LED(char *dat) {
-  Serial.println(dat);
+  Serial.print(dat); // echo
   int size = tokenize(dat);
-  if (size >= 4) {
-    if ((toks[1] < ConfigMem::MaxLED) && (toks[2] < ConfigMem::MaxChannel) && \
-        (toks[3] < 101) && (toks[3] >= 1)) {
-      ld.Number = toks[1];
-      ld.Channel = toks[2];  // KJH
-      ld.MaxBrightness = toks[3];
-      if (ld.Save()) {
-        Serial.println("LED Configured");
-      } else {
-        Serial.println("LED Save Error");
-      }
+  if ((size == 4) && \
+      (toks[1] < ConfigMem::MaxLED) && \
+      (toks[2] < ConfigMem::MaxChannel) && \
+      (toks[3] < 101) && \
+      (toks[3] >= 1)) {
+    ld.Number = toks[1];
+    ld.Channel = toks[2];
+    ld.MaxBrightness = toks[3];
+    if (ld.Save()) {
+      Serial.println("LED Configured");
     } else {
-      Serial.println("Invalid Input. LED Not Configured");
+      Serial.println("LED Save Error");
     }
+  } else {
+    Serial.println("Invalid Input. LED Not Configured");
   }
 }
 
+/**
+  @fn    config_Flash
+  @brief Parses message from host and configures a Flash
+
+         The input string should have exactly 7 tokens: the letter F,
+         the flash number, the LED number, the up duration, the on duration,
+         the down duration, and the interpulse interval.
+
+  @param dat string containing message from host
+*/
 void config_Flash(char *dat) {
-  Serial.print(dat);
+  Serial.print(dat); // echo
   int size = tokenize(dat);
-  if (size >= 7) {
+  if (size == 7) {
     fl.Number = toks[1];
     fl.LED = toks[2];
     fl.UpDuration = toks[3];
@@ -150,23 +159,37 @@ void config_Flash(char *dat) {
       Serial.println("Flash Configuration Error");
     }
   } else {
-    Serial.println("Flash Congiguration Error");
+    Serial.println("Flash Configuration Error");
   }
 }
 
+/**
+  @fn    config_Pattern
+  @brief Parses message from host and configures a Pattern
+
+         The input string should have at least 4 tokens: the letter P,
+         the pattern number, the flash pattern interval, and 1 to 16 flash
+         numbers. The maximum number of tokens is 19.
+
+  @param dat string containing message from host
+*/
 void config_Pattern(char *dat) {
-  Serial.println(dat);
+  Serial.print(dat);
   int size = tokenize(dat);
   if (size >= 4) {
     pt.Number = toks[1];
     pt.FlashPatternInterval = toks[2];
+    //
+    // Put specified flash numbers into FlashList, fill rest of array
+    // with zeros
+    //
     int i;
     for (i = 3; i < size; i++) {
       pt.FlashList[i - 3] = toks[i];
     }
-    for ( ; i < 19; i++) {      // KJH
-      pt.FlashList[i - 3] = 0;  // KJH
-    }                           // KJH
+    for ( ; i < 19; i++) {
+      pt.FlashList[i - 3] = 0;
+    }
     if (pt.Save()) {
       Serial.println("Pattern Configured");
     } else {
@@ -178,16 +201,16 @@ void config_Pattern(char *dat) {
 }
 
 /**
-  @fn     config_Random
-  @brief  Configures a random pattern set
+  @fn    config_Random
+  @brief Parses message from host and configures a random pattern set
 
-          The input string should have at least 3 tokens: the letter R,
-          the pattern set number, and at least one pattern to add to
-          the set. Up to 16 patterns can be added to the set, from 1 to
-          16. The set is stored as a single 16-bit integer, with bit N-1
-          set to 1 to indicate that pattern N is in the set.
+         The input string should have at least 3 tokens: the letter R,
+         the pattern set number, and at least one pattern to add to
+         the set. Up to 16 patterns can be added to the set, from 1 to
+         16. The set is stored as a single 16-bit integer, with bit N-1
+         set to 1 to indicate that pattern N is in the set.
 
-  @param  dat pointer to input character string
+  @param dat pointer to input character string
 */
 void config_Random(char *dat)
 {
@@ -232,25 +255,34 @@ void config_Time(char *dat)
   }
 }
 
-/*
-   Parameters:
-   delim: If dat contains one of these, split it at this character
-   dat: a char string to be split up wherever there is a delim parameter
+/**
+  @fn    tokenize
+  @brief Extract tokens from the message sent by the host
 
-   Return:
-   returns the number of tokens split
+         The tokens are converted to integers and loaded into a global array
+         'toks'. Unused entries in the 'toks' array are set to zero.
 
-   Note:
-   The split tokens are stored in a global 2D char array that needs to be allocated enough space
+  @param  dat pointer to input character string
+  @return number of tokens found
 */
 int tokenize(char *dat) {
+
+  int index;
+  for (index = 0; index < (sizeof toks / sizeof * toks); index++) {
+    toks[index] = 0;
+  }
+
   char* ptr = NULL;
-  int index = 1;
   strtok(dat, ",");
+  index = 1;
   while (1) {
     ptr = strtok(NULL, ",");
     if (ptr == NULL) {
       break;
+    }
+    if (index >= (sizeof toks / sizeof * toks)) {
+      Serial.println("Error: Message has too many tokens");
+      return 0;
     }
     toks[index] = atoi(ptr);
     index ++;
