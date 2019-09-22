@@ -32,7 +32,7 @@
 
           RTC functions will act as stubs, returning fake data
 */
-#define FAKE_RTC
+//#define FAKE_RTC
 
 /**
    @class  RealTimeClock
