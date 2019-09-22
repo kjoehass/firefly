@@ -17,7 +17,7 @@
 
    @author K. Joseph Hass
    @date Created: 2019-02-20T08:28:10-0500
-   @date Last modified: 2019-05-31T17:04:51-0400
+   @date Last modified: 2019-09-18T09:49:06-0400
 
    @copyright Copyright (C) 2019 Kenneth Joseph Hass
 
@@ -81,12 +81,10 @@ uint16_t ConfigMem::EventBase      = 0;
 uint16_t ConfigMem::RandomBase     = 0;
 
 
-
 #if ARDUINO_IS_UNO == 1
-const uint16_t  MaxPWM      = 255;
+const int  MAX_PWM = 255;
 #else
 #error "Arduino model is undefined"
-const uint16_t  MaxPWM      = 0;
 #endif
 
 /**
@@ -170,6 +168,12 @@ static uint16_t Read2Byte(uint16_t * address_p, uint8_t * checksum_p)
 /**
   @fn    MSDelay
   @brief Waits for specified milliseconds
+
+         The wait time is actually some number of milliseconds from the
+         <b>last time</b> that MSDelay() was called. If called with a
+         parameter of zero the function just waits for the millisecond timer
+         to increment. The intent of this function is to provide more precise
+         delays than the built-in delay() function.
 
   @param time milliseconds to wait
 */
@@ -379,11 +383,11 @@ void LED::setLevel(uint8_t level)
 {
 
   uint32_t PWM_Value = level * MaxBrightness;
-  PWM_Value *= MaxPWM;
+  PWM_Value *= MAX_PWM;
   PWM_Value = PWM_Value + 5000;
   PWM_Value = PWM_Value / 10000;
-  if (PWM_Value > MaxPWM) {
-    PWM_Value = MaxPWM;
+  if (PWM_Value > MAX_PWM) {
+    PWM_Value = MAX_PWM;
   }
   if (PWM_Value == 0) {
     digitalWrite(Channel2Pin[ld.Channel], LOW);
@@ -461,6 +465,7 @@ void Flash::Get(uint8_t flashnum)
   }
   //
   // Make sure that flashnum is in the correct range, and checksum is zero
+  // If not, clear the data members.
   //
   if ((flashnum == 0) || (flashnum > ConfigMem::MaxFlash) ||
       (Checksum != 0)) {
@@ -738,12 +743,20 @@ void Pattern::Display(void)
   @fn    Pattern::Execute
   @brief Executes the pattern
 
+  Before beginning each pattern we send a message to the host with the
+  current time, temperature, and pattern number.
 */
 void Pattern::Execute()
 {
   uint16_t TimeLeft = FlashPatternInterval;
 
-  disp_pattern();
+  String Msg = "p,";
+  Msg += String(RealTimeClock::DateTime());
+  Msg += ",";
+  Msg += String(TempSensor::Temperature());
+  Msg += ",";
+  Msg += String(Number, DEC);
+  Serial.println(Msg);
 
   for (int i = 0; i < 16; i++) {
     if (FlashList[i] != 0) {
