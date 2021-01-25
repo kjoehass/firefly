@@ -39,6 +39,8 @@ class LED:
         return "L,{0},{1},{2}\n".format(self.number, self.channel,
                                         self.maxbrightness)
 
+    def validate(self):
+        """Verify that this is a well-defined LED"""
 
 class Flash:
     def __init__(self, number=0, led=0, updur=0, ondur=0, dndur=0, ipi=0):
@@ -84,6 +86,7 @@ class Flash:
         fields = [int(field) for field in fields]
         self.number, self.LED, self.up_duration, self.on_duration, \
                 self.down_duration, self.interpulse_interval = fields
+        return self.validate()
 
     def display(self):
         return ("Flash {0}: LED={1} Up={2} On={3} Down={4} IPI={5}\n".format(
@@ -97,6 +100,32 @@ class Flash:
                                                      self.down_duration,
                                                      self.interpulse_interval))
 
+    def validate(self):
+        """
+        Verify that this is a well-defined flash.
+
+        If it is, return an empty string.
+        If not, return a string containing an error message.
+        """
+        message = ""
+        if self.number < 1 or self.number > config.max_flash:
+            message = message + "Invalid flash number: {0}\n".format(self.number)
+        if config.LEDs[self.LED] is None:
+            message = message + "LED {0} is undefined\n".format(self.LED)
+        if self.up_duration < 0:
+            message = message \
+                      + "Up duration is <0: {0}\n".format(self.up_duration)
+        if self.on_duration < 0:
+            message = message \
+                      + "On duration is <0: {0}\n".format(self.on_duration)
+        if self.down_duration < 0:
+            message = message \
+                      + "Down duration is <0: {0}\n".format(self.down_duration)
+        if (self.up_duration + self.on_duration + self.down_duration) \
+           > self.interpulse_interval:
+            message = message + "Interpulse interval is too short\n"
+
+        return message
 
 class Pattern:
     def __init__(self):
@@ -147,6 +176,7 @@ class Pattern:
             self.flash_list[i + 1] = fields[i]
         for i in range(len(fields), 16):
             self.flash_list[i + 1] = None
+        return self.validate()
 
     def display(self):
         msg = "Pattern {0}: FPI {1} Flashes:".format(
@@ -158,13 +188,35 @@ class Pattern:
         return msg
 
     def dump(self):
-        msg = "P,{0},{1}".format(self.number, self.flash_pattern_interval)
+        message = "P,{0},{1}".format(self.number, self.flash_pattern_interval)
         for i in range(len(self.flash_list)):
             if self.flash_list[i] is not None:
-                msg = msg + ",{0}".format(self.flash_list[i])
-        msg = msg + '\n'
-        return msg
+                message = message + ",{0}".format(self.flash_list[i])
+        message = message + '\n'
+        return message
 
+    def validate(self):
+        """
+        Verify that this is a well-defined pattern.
+
+        If it is, return an empty string.
+        If not, return a string containing an error message.
+        """
+        message = ""
+        if self.number < 1 or self.number > config.max_pattern:
+            message = message + "Invalid pattern number: {0}\n".format(self.number)
+        total_time = 0
+        for i in range(len(self.flash_list)):
+            if self.flash_list[i] is not None:
+                this_flash = config.flashes[self.flash_list[i]]
+                if this_flash is None:
+                    message = message \
+                              + "Flash {0} is undefined\n".format(self.flash_list[i])
+                else:
+                    total_time = total_time + this_flash.interpulse_interval
+        if total_time > self.flash_pattern_interval:
+            message = message + "Flash pattern interval is too short\n"
+        return message
 
 class RandPatternSet:
     def __init__(self):
@@ -207,8 +259,9 @@ class RandPatternSet:
         fields = fields[1:]
         for i in range(len(fields)):
             self.pattern_set[i + 1] = fields[i]
-        for i in range(len(fields), 16):
+        for i in range(len(fields), config.max_patterns_in_set):
             self.pattern_set[i + 1] = None
+        return self.validate()
 
     def display(self):
         msg = "Random Set {0}: Patterns:".format(self.number)
@@ -225,3 +278,20 @@ class RandPatternSet:
                 msg = msg + ",{0}".format(self.pattern_set[i])
         msg = msg + '\n'
         return msg
+
+    def validate(self):
+        """
+        Verify that this is a well-defined pattern set.
+
+        If it is, return an empty string.
+        If not, return a string containing an error message.
+        """
+        message = ""
+        if self.number < 1 or self.number > config.max_pattern_set:
+            message = message + "Invalid pattern set number: {0}\n".format(self.number)
+        for i in range(len(self.pattern_set)):
+            if self.pattern_set[i] is not None:
+                if config.patterns[self.pattern_set[i]] is None:
+                    message = message \
+                              + "Pattern {0} is undefined\n".format(self.pattern_set[i])
+        return message

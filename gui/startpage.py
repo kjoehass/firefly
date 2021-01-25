@@ -55,6 +55,7 @@ Information messages appear here.
             if not tkmb.askokcancel('Verify', 'Discard changes you made?'):
                 return
         config.changed = False
+        config.erase_config()
 
         self.log_area.delete('1.0', tk.END)
 
@@ -112,6 +113,7 @@ Information messages appear here.
             if not tkmb.askokcancel('Verify', 'Discard changes you made?'):
                 return
         config.changed = False
+        config.erase_config()
 
         self.log_area.delete('1.0', tk.END)
         filename = tkfd.askopenfilename(defaultextension='.csv',
@@ -132,13 +134,19 @@ Information messages appear here.
                 config.led_from_response(response)
             if response[0] == 'F':
                 self.log_area.insert(tk.END, response)
-                config.flash_from_response(response)
+                message = config.flash_from_response(response)
+                if message != "":
+                    tkmb.showwarning('Invalid flash, ignored', message)
             if response[0] == 'P':
                 self.log_area.insert(tk.END, response)
-                config.pattern_from_response(response)
+                message = config.pattern_from_response(response)
+                if message != "":
+                    tkmb.showwarning('Invalid pattern, ignored', message)
             if response[0] == 'R':
                 self.log_area.insert(tk.END, response)
-                config.pattern_set_from_response(response)
+                message = config.pattern_set_from_response(response)
+                if message != "":
+                    tkmb.showwarning('Invalid pattern set, ignored', message)
 
         infile.close()
         self.log_area.insert(tk.END, "\nDone")
