@@ -29,10 +29,18 @@ class Arduino:
                 config.log_area.insert(tk.END, ") on " + self.portname + '\n')
                 config.log_area.update_idletasks()
 
-                self.comport = serial.Serial(port=self.portname,
-                                             baudrate=fd.ARDUINO_BAUDRATE,
-                                             bytesize=serial.EIGHTBITS,
-                                             parity=serial.PARITY_NONE)
+                try:
+                    self.comport = serial.Serial(port=self.portname,
+                                                 baudrate=fd.ARDUINO_BAUDRATE,
+                                                 bytesize=serial.EIGHTBITS,
+                                                 parity=serial.PARITY_NONE)
+                except Exception as e:
+                    config.log_area.insert(tk.END,
+                                           "!!! Could not open serial port:\n"
+                                           + repr(e))
+                    config.log_area.update_idletasks()
+                    return
+
                 # Wait a long time for first response.
                 self.comport.timeout = 5.0
                 response = self.comport.readline()
