@@ -208,16 +208,18 @@ class PatternConfig(tk.Frame):
 
         # Make sure the minimum flash pattern interval is at least as long
         # as the sum of the interpulse intervals
-        min_fpi = 0.0
+        min_fpi_ms = 0
         for i in range(1, len(self.temp_patt.flash_list)):
             flshnum = self.temp_patt.flash_list[i]
             if flshnum is not None:
                 thisflsh = copy.copy(config.flashes[flshnum])
-                min_fpi = min_fpi + thisflsh.interpulse_interval / 1000.0
+                min_fpi_ms = min_fpi_ms + thisflsh.interpulse_interval
 
-        min_fpi = math.ceil(min_fpi * 2.0) / 2.0  # round UP to 0.5s
-        if self.flsh_patt_int.get() < min_fpi:
-            self.flsh_patt_int.set(min_fpi)
+        #min_fpi = math.ceil(min_fpi * 2.0) / 2.0  # round UP to 0.5s
+        min_fpi_ms = ((min_fpi_ms + 99) // 100) * 100 # round UP to 0.1s
+        if self.flsh_patt_int.get() < (min_fpi_ms / 1000):
+            self.temp_patt.flash_pattern_interval = min_fpi_ms
+            self.flsh_patt_int.set(min_fpi_ms / 1000)
 
         fpi = self.flsh_patt_int.get()
         self.patt_img.create_text(self.graph_right - 5,
@@ -305,8 +307,23 @@ class PatternConfig(tk.Frame):
         else:
             self.temp_patt = copy.copy(config.patterns[self.sel_patt.get()])
 
-        # Update widgets then update graph
-        self.flsh_patt_int.set(self.temp_patt.flash_pattern_interval / 1000.0)
+        # Verify that the interpulse interval is long enough. If one
+        # of the flashes was changed to have a longer duration then
+        # any patterns that use that flash may need to be updated.
+        total_time = 0
+        flshlist = self.temp_patt.flash_list
+        for i in range(len(flshlist)):
+            if flshlist[i] is not None:
+                this_flash = config.flashes[flshlist[i]]
+                total_time = total_time + this_flash.interpulse_interval
+        if total_time > self.temp_patt.flash_pattern_interval:
+            tkmb.showwarning('Pattern was broken!',
+                             'Interpulse interval will be increased.')
+            self.modified = True
+
+        # update the slider widget, flash select widgets, and graph
+        self.flsh_patt_int.set(
+                    self.temp_patt.flash_pattern_interval / 1000)
         self.set_spinboxes()
         self.update_graph()
 

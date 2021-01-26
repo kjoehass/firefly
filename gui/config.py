@@ -67,3 +67,21 @@ def pattern_set_from_response(resp_str):
     if message == "":
       pattern_sets[my_pattern_set.number] = copy.copy(my_pattern_set)
     return message
+
+def patterns_are_invalid():
+    """Check that all patterns have a valid duration
+
+    Returns error message of first invalid pattern found, or
+    None if no patterns are invalid.
+
+    If a flash duration was changed AFTER creating a pattern
+    that used said flash, then it is possible that the pattern
+    duration is no longer enough.
+    """
+    for pat in patterns:
+        if pat is not None:
+            message = pat.validate()
+            if message != "":
+                return "Pattern number {}\n".format(pat.number) + message
+    return
+

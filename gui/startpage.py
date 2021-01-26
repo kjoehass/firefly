@@ -94,6 +94,14 @@ Information messages appear here.
     def on_tosim(self):
         self.log_area.delete('1.0', tk.END)
 
+        # Make sure each pattern's flash_pattern_interval is still valid
+        # Don't save if any patterns are invalid.
+        patmsg = config.patterns_are_invalid()
+        if patmsg is not None:
+            tkmb.showwarning('Pattern is Invalid!',
+                              patmsg + 'Fix and try again.\n')
+            return
+
         ARD = ac.Arduino()
         if ARD.portname is None:
             tkmb.showwarning('Fail', 'No simulator connected')
@@ -153,6 +161,15 @@ Information messages appear here.
 
     def on_tofile(self):
         self.log_area.delete('1.0', tk.END)
+
+        # Make sure the patterns' flash_pattern_interval is still valid
+        # If not, don't save
+        patmsg = config.patterns_are_invalid()
+        if patmsg is not None:
+            tkmb.showwarning('Pattern is Invalid!',
+                              patmsg + 'Fix and try again.\n')
+            return
+
         filename = tkfd.asksaveasfilename(defaultextension='.csv',
                                           title="Save configuration file",
                                           filetypes=(("csv files", "*.csv"),
