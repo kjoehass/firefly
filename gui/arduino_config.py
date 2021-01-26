@@ -175,7 +175,7 @@ class Arduino:
         """Set the current time on the simulator real-time-clock. """
 
         now = datetime.datetime.utcnow()
-        timestring = now.strftime('T,%y,%m,%d,%H,%M,%S\n')
+        timestring = now.strftime('T,%Y,%m,%d,%H,%M,%S\n')
         self.comport.write(timestring.encode())
 
         # Check for valid response here?
