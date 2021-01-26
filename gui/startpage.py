@@ -87,7 +87,7 @@ Information messages appear here.
         for this in config.pattern_sets:
             if this is not None:
                 self.log_area.insert(tk.END, this.display())
-        self.log_area.insert(tk.END, "=== Upload finished")
+        self.log_area.insert(tk.END, "=== Upload finished\n")
 
         ARD.comport.close()
 
@@ -111,7 +111,7 @@ Information messages appear here.
         ARD.configure()
 
         config.changed = False
-        self.log_area.insert(tk.END, "=== Download finished")
+        self.log_area.insert(tk.END, "=== Download finished\n")
 
         ARD.comport.close()
 

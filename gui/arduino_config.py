@@ -58,6 +58,12 @@ class Arduino:
 
     def get_capacity(self):
         """Get the capacity information from the Arduino. """
+
+        config.log_area.insert(
+            tk.END,
+            "=== Getting Arduino configuration information, please wait\n")
+        config.log_area.update_idletasks()
+
         self.comport.write(b'C\r\n')
         response = self.comport.readline()
 
@@ -67,6 +73,7 @@ class Arduino:
             tk.END,
             "=== Date/time: {0}   Temp: {1}C\n".format(fields[1].decode(),
                                                        fields[2].decode()))
+        config.log_area.update_idletasks()
 
         fields = fields[3:]
         fields = [int(field) for field in fields]
@@ -77,6 +84,12 @@ class Arduino:
 
     def get_leds(self):
         """Get all of the configured LEDs from the Arduino """
+
+        config.log_area.insert(
+            tk.END,
+            "=== Getting LED information, please wait\n")
+        config.log_area.update_idletasks()
+
         self.comport.write(b'DL\r\n')
         while True:
             response = self.comport.readline()
@@ -86,6 +99,12 @@ class Arduino:
 
     def get_flashes(self):
         """Get all of the configured flashes from the Arduino """
+
+        config.log_area.insert(
+            tk.END,
+            "=== Getting flash information, please wait\n")
+        config.log_area.update_idletasks()
+
         self.comport.write(b'DF\r\n')
         while True:
             response = self.comport.readline()
@@ -95,6 +114,12 @@ class Arduino:
 
     def get_patterns(self):
         """Get all of the configured patterns from the Arduino """
+
+        config.log_area.insert(
+            tk.END,
+            "=== Getting pattern information, please wait\n")
+        config.log_area.update_idletasks()
+
         self.comport.write(b'DP\r\n')
         while True:
             response = self.comport.readline()
@@ -104,6 +129,12 @@ class Arduino:
 
     def get_pattern_sets(self):
         """Get all of the configured random pattern sets from the Arduino """
+
+        config.log_area.insert(
+            tk.END,
+            "=== Getting random pattern set information, please wait\n")
+        config.log_area.update_idletasks()
+
         self.comport.write(b'DR\r\n')
         while True:
             response = self.comport.readline()
@@ -113,6 +144,12 @@ class Arduino:
 
     def configure(self):
         """Configure the simulator from the config.xxxxx arrays"""
+
+        config.log_area.insert(
+            tk.END,
+            "=== Downloading to the Arduino, please wait\n")
+        config.log_area.update_idletasks()
+
         arrays = [
             config.LEDs, config.flashes, config.patterns, config.pattern_sets
         ]
