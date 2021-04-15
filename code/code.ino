@@ -197,7 +197,7 @@ void setup() {
   // Configure all PWM pins as outputs
   //
   for (int i = 1; i < (sizeof Channel2Pin / sizeof * Channel2Pin); i++) {
-    pinMode(i, OUTPUT);
+    pinMode(Channel2Pin[i], OUTPUT);
   }
 }
 
