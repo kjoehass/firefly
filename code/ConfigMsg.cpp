@@ -112,8 +112,8 @@ void config_LED(char *dat) {
   Serial.print(dat); // echo
   int size = tokenize(dat);
   if ((size == 4) && \
-      (toks[1] < ConfigMem::MaxLED) && \
-      (toks[2] < ConfigMem::MaxChannel) && \
+      (toks[1] <= ConfigMem::MaxLED) && \
+      (toks[2] <= ConfigMem::MaxChannel) && \
       (toks[3] < 101) && \
       (toks[3] >= 1)) {
     ld.Number = toks[1];
