@@ -51,7 +51,7 @@ void exec_led(char *dat) {
       ld.setLevel(toks[2]);
     }
   } else {
-    Serial.println("ERROR");
+    Serial.println("ERROR Executing LED");
   }
 }
 
